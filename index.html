@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="utf-8" />
-<title>Zombs Offline — Single Clean File</title>
+<title>Zombs Offline — Upgrade Preview</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <style>
 :root{
@@ -27,139 +27,134 @@ canvas{display:block;position:absolute;left:0;top:0}
 .small{font-size:12px;color:#9ab;margin-left:8px}
 .centerNote{font-size:13px;color:#bcd;margin-top:6px}
 .btn{background:#123; border-radius:6px; padding:6px 8px; color:#bfe; border:0; cursor:pointer}
+.btn[disabled]{opacity:0.45; cursor:not-allowed}
 .tooltip { position: absolute; background: rgba(0,0,0,0.8); padding:6px 8px; border-radius:6px; font-size:12px; color:#fff; pointer-events:none; z-index:40; display:none; }
+.upgrade-preview { font-family: monospace; font-size:12px; color:#cfe; }
+.upgrade-preview .old { color:#aab; }
+.upgrade-preview .new { color:#ffd36b; font-weight:700; margin-left:8px; }
+.upgrade-preview .delta { color:#9f9; margin-left:6px; }
 </style>
 </head>
 <body>
-<div id="uiTop">
-  <div id="leftPanel" class="panel">
-    <div><strong>Wave:</strong> <span id="wave">0</span></div>
-    <div><strong>Lives:</strong> <span id="lives">10</span></div>
-    <div><strong>Time:</strong> <span id="dayNight">Day</span></div>
-    <div class="small" id="dayTimer">(—)</div>
-  </div>
+  <div id="uiTop">
+    <div id="leftPanel" class="panel">
+      <div><strong>Wave:</strong> <span id="wave">0</span></div>
+      <div><strong>Lives:</strong> <span id="lives">10</span></div>
+      <div><strong>Time:</strong> <span id="dayNight">Day</span></div>
+      <div class="small" id="dayTimer">(—)</div>
+    </div>
 
-  <div id="rightPanel" class="panel">
-    <div class="res-pill">🪵 <span id="goldWood">0</span></div>
-    <div class="res-pill">🪨 <span id="goldStone">0</span></div>
-    <div class="res-pill">💰 <span id="goldCount">0</span></div>
-  </div>
-</div>
-
-<div id="hudMsg" class="hudMsg" style="display:none"></div>
-
-<div id="shop" aria-label="Build menu">
-  <div style="font-weight:800;margin-bottom:8px">BUILD</div>
-
-  <!-- Stash (free, required) -->
-  <div class="shop-row">
-    <div class="shop-btn" data-build="stash" title="Free — required to start waves">
-      <div class="shop-emoji">🏆</div>
-      <div><strong>Gold Stash</strong><div class="small">Free — required</div></div>
-      <div style="margin-left:auto;font-weight:700">Free</div>
+    <div id="rightPanel" class="panel">
+      <div class="res-pill">🪵 <span id="goldWood">0</span></div>
+      <div class="res-pill">🪨 <span id="goldStone">0</span></div>
+      <div class="res-pill">💰 <span id="goldCount">0</span></div>
     </div>
   </div>
 
-  <!-- Mine -->
-  <div class="shop-row">
-    <div class="shop-btn" data-build="mine" title="Mine cost: 20 wood, 10 stone (max 8)">
-      <div class="shop-emoji">⛏️</div>
-      <div><strong>Gold Mine</strong><div class="small">Produces gold over time (place ASAP)</div></div>
-      <div style="margin-left:auto;font-weight:700">20🪵 10🪨</div>
+  <div id="hudMsg" class="hudMsg" style="display:none"></div>
+
+  <div id="shop" aria-label="Build menu">
+    <div style="font-weight:800;margin-bottom:8px">BUILD</div>
+
+    <div class="shop-row">
+      <div class="shop-btn" data-build="stash" title="Free — required to start waves">
+        <div class="shop-emoji">🏆</div>
+        <div><strong>Gold Stash</strong><div class="small">Free — required</div></div>
+        <div style="margin-left:auto;font-weight:700">Free</div>
+      </div>
+    </div>
+
+    <div class="shop-row">
+      <div class="shop-btn" data-build="mine" title="Mine cost: 20 wood, 10 stone (max 8)">
+        <div class="shop-emoji">⛏️</div>
+        <div><strong>Gold Mine</strong><div class="small">Produces gold over time (place ASAP)</div></div>
+        <div style="margin-left:auto;font-weight:700">20🪵 10🪨</div>
+      </div>
+    </div>
+
+    <div style="height:8px"></div>
+    <div style="font-weight:700;margin-top:6px">TOWERS</div>
+
+    <div class="shop-row">
+      <div class="shop-btn" data-build="fire" title="Fire Tower: 30 wood, 15 stone">
+        <div class="shop-emoji">🔥</div>
+        <div><strong>Fire Tower</strong><div class="small">Average damage + burn</div></div>
+        <div style="margin-left:auto;font-weight:700">30🪵 15🪨</div>
+      </div>
+    </div>
+
+    <div class="shop-row">
+      <div class="shop-btn" data-build="cold" title="Cold Tower: 25 wood, 20 stone">
+        <div class="shop-emoji">❄️</div>
+        <div><strong>Cold Tower</strong><div class="small">Strong slow, low dmg</div></div>
+        <div style="margin-left:auto;font-weight:700">25🪵 20🪨</div>
+      </div>
+    </div>
+
+    <div class="shop-row">
+      <div class="shop-btn" data-build="poison" title="Poison Tower: 40 wood, 25 stone">
+        <div class="shop-emoji">☠️</div>
+        <div><strong>Poison Tower</strong><div class="small">Low hit, poison DOT</div></div>
+        <div style="margin-left:auto;font-weight:700">40🪵 25🪨</div>
+      </div>
+    </div>
+
+    <div style="margin-top:8px;font-weight:700">TOOLS</div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn" id="forceNightBtn">Force Night</button>
+      <button class="btn" id="wipeBaseBtn">Wipe Base</button>
+      <button class="btn" id="sellBtn">Sell Selected</button>
+    </div>
+
+    <div class="centerNote" style="margin-top:8px">Click an item, then click the map to place. Double-click map quick-places. Keys: 1-5 select.</div>
+  </div>
+
+  <div id="centerControls" class="panel" style="left:364px;top:86px;position:absolute">
+    <div style="font-weight:700">Controls</div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <div class="small">WASD move • Left-click / Space = Use tool</div>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <button class="btn" id="toolHand">Hand</button>
+      <button class="btn" id="toolAxe">Axe</button>
     </div>
   </div>
 
-  <div style="height:8px"></div>
-  <div style="font-weight:700;margin-top:6px">TOWERS</div>
+  <div id="nightShade"></div>
+  <div class="player-hp"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><div>Player HP</div><div id="hpText">100/100</div></div><div class="hpBar"><div id="hpFill" class="hpFill" style="width:100%"></div></div></div>
 
-  <div class="shop-row">
-    <div class="shop-btn" data-build="fire" title="Fire Tower: 30 wood, 15 stone">
-      <div class="shop-emoji">🔥</div>
-      <div><strong>Fire Tower</strong><div class="small">Average damage + burn</div></div>
-      <div style="margin-left:auto;font-weight:700">30🪵 15🪨</div>
+  <div id="tooltip" class="tooltip"></div>
+
+  <!-- Action panel shows when you click a building -->
+  <div id="actionPanel" class="panel" style="display:none; position:absolute; z-index:60; left:20px; top:120px; flex-direction:column; gap:8px;">
+    <div id="actionTitle" style="font-weight:800">Selected</div>
+    <div id="actionInfo" class="small">--</div>
+    <div id="upgradePreview" class="upgrade-preview" style="display:block"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn" id="actionSellBtn">Sell</button>
+      <button class="btn" id="actionUpgradeBtn">Upgrade</button>
+      <button class="btn" id="actionCloseBtn">Close</button>
     </div>
   </div>
 
-  <div class="shop-row">
-    <div class="shop-btn" data-build="cold" title="Cold Tower: 25 wood, 20 stone">
-      <div class="shop-emoji">❄️</div>
-      <div><strong>Cold Tower</strong><div class="small">Strong slow, low dmg</div></div>
-      <div style="margin-left:auto;font-weight:700">25🪵 20🪨</div>
-    </div>
-  </div>
-
-  <div class="shop-row">
-    <div class="shop-btn" data-build="poison" title="Poison Tower: 40 wood, 25 stone">
-      <div class="shop-emoji">☠️</div>
-      <div><strong>Poison Tower</strong><div class="small">Low hit, poison DOT</div></div>
-      <div style="margin-left:auto;font-weight:700">40🪵 25🪨</div>
-    </div>
-  </div>
-
-  <div style="margin-top:8px;font-weight:700">TOOLS</div>
-  <div style="display:flex;gap:8px;margin-top:8px">
-    <button class="btn" id="forceNightBtn">Force Night</button>
-    <button class="btn" id="wipeBaseBtn">Wipe Base</button>
-    <button class="btn" id="sellBtn">Sell Selected (S)</button>
-  </div>
-
-  <div class="centerNote" style="margin-top:8px">Click an item, then click the map to place. Double-click map quick-places. Keys: 1-5 select.</div>
-</div>
-
-<div id="centerControls" class="panel" style="left:364px;top:86px;position:absolute">
-  <div style="font-weight:700">Controls</div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <div class="small">WASD move • Left-click / Space = Use tool</div>
-  </div>
-  <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-    <button class="btn" id="toolHand">Hand</button>
-    <button class="btn" id="toolAxe">Axe</button>
-  </div>
-</div>
-
-<div id="nightShade"></div>
-<div class="player-hp"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><div>Player HP</div><div id="hpText">100/100</div></div><div class="hpBar"><div id="hpFill" class="hpFill" style="width:100%"></div></div></div>
-
-<div id="tooltip" class="tooltip"></div>
-
-<!-- Action panel shows when you click a building -->
-<div id="actionPanel" class="panel" style="display:none; position:absolute; z-index:60; left:20px; top:120px; flex-direction:column; gap:8px;">
-  <div id="actionTitle" style="font-weight:800">Selected</div>
-  <div id="actionInfo" class="small">--</div>
-  <div id="upgradePreview" class="upgrade-preview" style="display:none"></div>
-  <div style="display:flex;gap:8px">
-    <button class="btn" id="actionSellBtn">Sell</button>
-    <button class="btn" id="actionUpgradeBtn">Upgrade</button>
-    <button class="btn" id="actionCloseBtn">Close</button>
-  </div>
-</div>
-
-<canvas id="gameCanvas"></canvas>
+  <canvas id="gameCanvas"></canvas>
 
 <script>
-/*
-  Single-file cleaned version.
-  I kept every feature you had and removed duplicates/obvious crash sources.
-  If anything still fails, paste the first console error here.
-*/
-
 (() => {
-  // --- Setup & canvas ---
+  // --- Canvas & sizing ---
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   function resize(){
-    const w = window.innerWidth, h = window.innerHeight;
-    // preserve previous logic: keep canvas.width/height as CSS pixels so rest of code remains unchanged
-    canvas.width = Math.max(320, Math.floor(w));
-    canvas.height = Math.max(240, Math.floor(h));
+    const w = Math.max(640, window.innerWidth), h = Math.max(480, window.innerHeight);
+    canvas.width = Math.floor(w);
+    canvas.height = Math.floor(h);
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
   }
   window.addEventListener('resize', resize);
   resize();
 
-  // --- Constants & HUD elements ---
-  const MAP_W = 2000, MAP_H = 1400;
+  // --- DOM refs (grab before wiring) ---
   const HUD_wave = document.getElementById('wave');
   const HUD_lives = document.getElementById('lives');
   const HUD_gold = document.getElementById('goldCount');
@@ -173,6 +168,21 @@ canvas{display:block;position:absolute;left:0;top:0}
   const tooltip = document.getElementById('tooltip');
   const nightShade = document.getElementById('nightShade');
 
+  const forceBtn = document.getElementById('forceNightBtn');
+  const wipeBtn  = document.getElementById('wipeBaseBtn');
+  const sellBtn  = document.getElementById('sellBtn');
+
+  const toolHandBtn = document.getElementById('toolHand');
+  const toolAxeBtn  = document.getElementById('toolAxe');
+
+  const actionPanel  = document.getElementById('actionPanel');
+  const actionTitle  = document.getElementById('actionTitle');
+  const actionInfo   = document.getElementById('actionInfo');
+  const upgradePreview = document.getElementById('upgradePreview');
+  const actionSellBtn = document.getElementById('actionSellBtn');
+  const actionUpgradeBtn = document.getElementById('actionUpgradeBtn');
+  const actionCloseBtn = document.getElementById('actionCloseBtn');
+
   // --- Input ---
   const keys = {}, mouse = { x:0, y:0, down:false };
   document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
@@ -180,14 +190,14 @@ canvas{display:block;position:absolute;left:0;top:0}
   canvas.addEventListener('mousemove', e => {
     const r = canvas.getBoundingClientRect();
     mouse.x = (e.clientX - r.left) * (canvas.width / r.width);
-    mouse.y = (e.clientY - r.top) * (canvas.height / r.height);
+    mouse.y = (e.clientY - r.top)  * (canvas.height / r.height);
     tooltipFollow();
   });
   canvas.addEventListener('mousedown', e => { if(e.button===0) mouse.down = true; });
   canvas.addEventListener('mouseup', e => { if(e.button===0) mouse.down = false; });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-  // --- Utility ---
+  // --- Utilities ---
   const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
   function roundRect(x,y,w,h,r,fill){
     ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
@@ -196,47 +206,13 @@ canvas{display:block;position:absolute;left:0;top:0}
 
   // --- Persistence ---
   const SAVE_KEY = 'zombs_offline_wired_v1';
-  
-function savePersist(state){
-  try {
-    const saveObj = {
-      gold: Math.floor(state.gold),
-      wood: Math.floor(state.wood),
-      stone: Math.floor(state.stone),
-      stashLevel: state.stash ? (state.stash.level || 0) : 0,
-      towers: state.towers ? state.towers.map(t => ({ x:t.x, y:t.y, kind:t.kind, level:t.level || 1, dmg:t.dmg, range:t.range, rate:t.rate })) : [],
-      mines: state.mines ? state.mines.map(m => ({ x:m.x, y:m.y, level:m.level || 1, accum:m.accum })) : []
-    };
-    localStorage.setItem(SAVE_KEY, JSON.stringify(saveObj));
-  } catch(e){}
-}
-function loadPersist(state){
-  try {
-    const raw = localStorage.getItem(SAVE_KEY);
-    if(raw){
-      const o = JSON.parse(raw);
-      if(typeof o.gold==='number') state.gold = o.gold;
-      if(typeof o.wood==='number') state.wood = o.wood;
-      if(typeof o.stone==='number') state.stone = o.stone;
-      // stash level will be applied if stash exists on load
-      if(typeof o.stashLevel === 'number' && state.stash){ state.stash.level = o.stashLevel; }
-      if(Array.isArray(o.towers) && o.towers.length){
-        state.towers = o.towers.map(t => { const tw = new Tower(t.x,t.y,t.kind); tw.level = t.level || 1; tw.dmg = t.dmg || tw.dmg; tw.range = t.range || tw.range; tw.rate = t.rate || tw.rate; return tw; });
-      }
-      if(Array.isArray(o.mines) && o.mines.length){
-        state.mines = o.mines.map(m => { const mi = new Mine(m.x,m.y); mi.level = m.level || 1; mi.accum = m.accum || 0; return mi; });
-      }
-    }
-  } catch(e){}
-}
+  function savePersist(state){ try { localStorage.setItem(SAVE_KEY, JSON.stringify({ gold:Math.floor(state.gold), wood:Math.floor(state.wood), stone:Math.floor(state.stone) })); } catch(e){} }
+  function loadPersist(state){ try { const raw = localStorage.getItem(SAVE_KEY); if(raw){ const o = JSON.parse(raw); if(typeof o.gold==='number') state.gold = o.gold; if(typeof o.wood==='number') state.wood = o.wood; if(typeof o.stone==='number') state.stone = o.stone; } } catch(e){} }
+
   // --- HUD helpers ---
   let msgTimer = 0;
-  function showHUDMessage(text, ms=2000){
-    HUD_msg.style.display = 'block'; HUD_msg.textContent = text; msgTimer = ms;
-  }
-  function updateHUDMessageTimer(dt){
-    if(msgTimer > 0){ msgTimer -= dt*1000; if(msgTimer <= 0) HUD_msg.style.display = 'none'; }
-  }
+  function showHUDMessage(text, ms=2000){ HUD_msg.style.display = 'block'; HUD_msg.textContent = text; msgTimer = ms; }
+  function updateHUDMessageTimer(dt){ if(msgTimer > 0){ msgTimer -= dt*1000; if(msgTimer <= 0) HUD_msg.style.display = 'none'; } }
   function showTooltip(text){ tooltip.style.display = 'block'; tooltip.textContent = text; tooltipFollow(); }
   function hideTooltip(){ tooltip.style.display = 'none'; }
   function tooltipFollow(){
@@ -263,14 +239,14 @@ function loadPersist(state){
     });
   }
 
-  // --- World objects (ResourceNode, Player, Tower, Mine, Enemy) ---
+  // --- Entities ---
   class ResourceNode {
     constructor(x,y,type){ this.x=x; this.y=y; this.type=type; this.size=(type==='tree'?20:16); this.shake=0; }
     harvest(state){
       const amt = 1;
       if(this.type==='tree') state.wood += amt; else state.stone += amt;
       this.shake = 0.8; savePersist(state); updateHUD();
-      showHUDMessage(`+${amt} ${this.type==='tree'?'wood':'stone'}`);
+      showHUDMessage(`+${amt} ${this.type==='tree'?'wood':'stone'}`, 900);
     }
     update(dt){ if(this.shake>0) this.shake = Math.max(0, this.shake - dt); }
     draw(offX,offY){
@@ -279,7 +255,8 @@ function loadPersist(state){
       if(sx < -40 || sx > canvas.width+40 || sy < -40 || sy > canvas.height+40) return;
       ctx.save(); ctx.translate(sx, sy);
       if(this.type==='tree'){
-        ctx.fillStyle='#6b3f1f'; ctx.fillRect(-6,6,12,12); ctx.beginPath(); ctx.fillStyle='#2aa04a'; ctx.arc(0,-6,18,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#6b3f1f'; ctx.fillRect(-6,6,12,12);
+        ctx.beginPath(); ctx.fillStyle='#2aa04a'; ctx.arc(0,-6,18,0,Math.PI*2); ctx.fill();
       } else {
         ctx.fillStyle='#9ba0a5'; ctx.beginPath(); ctx.moveTo(-12,6); ctx.lineTo(-8,-8); ctx.lineTo(6,-10); ctx.lineTo(12,6); ctx.closePath(); ctx.fill();
         ctx.fillStyle='#7e8488'; ctx.fillRect(-6,4,12,8);
@@ -294,7 +271,7 @@ function loadPersist(state){
       let dx=0,dy=0;
       if(keys['w']) dy-=1; if(keys['s']) dy+=1; if(keys['a']) dx-=1; if(keys['d']) dx+=1;
       if(dx||dy){ const L=Math.hypot(dx,dy)||1; dx/=L; dy/=L; this.x += dx*this.speed*dt; this.y += dy*this.speed*dt; }
-      // collisions with blockers
+      // collisions
       const blockers = [...state.resourceNodes, ...state.towers, ...state.mines, ...(state.stash? [state.stash] : [])];
       for(const b of blockers){
         const bx=b.x, by=b.y, br=(b.size||18)+6;
@@ -304,7 +281,6 @@ function loadPersist(state){
           if(d>0){ this.x += (this.x-bx)/d * overlap; this.y += (this.y-by)/d * overlap; } else { this.x += overlap; this.y += overlap; }
         }
       }
-      // clamp to map bounds
       this.x = clamp(this.x, this.size+6, MAP_W - (this.size+6));
       this.y = clamp(this.y, this.size+6, MAP_H - (this.size+6));
       if(this.swing>0) this.swing = Math.max(0, this.swing - dt);
@@ -351,7 +327,7 @@ function loadPersist(state){
   }
 
   class Mine {
-    constructor(x,y){ this.x=x; this.y=y; this.size=16; this.goldPerSec=1; this.accum=0; this.level=1; } // goldPerSec=1
+    constructor(x,y){ this.x=x; this.y=y; this.size=16; this.goldPerSec=1; this.accum=0; }
     update(dt){ this.accum += this.goldPerSec * dt; }
     draw(offX,offY){ const sx = this.x - offX, sy = this.y - offY; if(sx < -50 || sx > canvas.width+50 || sy < -50 || sy > canvas.height+50) return; ctx.save(); ctx.translate(sx, sy); ctx.fillStyle='#ffd67a'; roundRect(-14,-10,28,20,6,true); ctx.restore(); }
   }
@@ -369,11 +345,21 @@ function loadPersist(state){
     update(dt){
       if(this.effects.burn > 0){ this.hp -= 4*dt; this.effects.burn = Math.max(0, this.effects.burn - dt); }
       if(this.effects.poison > 0){ this.hp -= 1.2*dt; this.effects.poison = Math.max(0, this.effects.poison - dt); }
-      let target = {x:MAP_W/2, y:MAP_H/2}; let bd = Math.hypot(target.x - this.x, target.y - this.y);
-      for(const m of state.mines){ const d = Math.hypot(m.x - this.x, m.y - this.y); if(d < bd){ bd=d; target={x:m.x,y:m.y}; } }
-      for(const t of state.towers){ const d = Math.hypot(t.x - this.x, t.y - this.y); if(d < bd){ bd=d; target={x:t.x,y:t.y}; } }
-      const pd = Math.hypot(state.player.x - this.x, state.player.y - this.y);
-      if(pd < 120){ bd = pd; target = {x:state.player.x, y:state.player.y}; }
+
+      let target = {x:MAP_W/2, y:MAP_H/2};
+      let bd = Math.hypot(target.x - this.x, target.y - this.y);
+      if(state.stash){
+        bd = Math.hypot(state.stash.x - this.x, state.stash.y - this.y);
+        target = { x: state.stash.x, y: state.stash.y };
+      }
+      const obstacles = [...state.mines, ...state.towers];
+      if(state.player) obstacles.push(state.player);
+      for(const o of obstacles){
+        if(!o) continue;
+        const d = Math.hypot(o.x - this.x, o.y - this.y);
+        if(d < bd){ bd=d; target={x:o.x,y:o.y}; }
+      }
+
       const dx = target.x - this.x, dy = target.y - this.y, len = Math.hypot(dx,dy)||1;
       let speed = this.maxSpeed;
       if(this.effects.slow && this.effects.slow > 0){ speed *= (1 - (this.slowFactor || 0)); this.effects.slow = Math.max(0, this.effects.slow - dt); }
@@ -381,24 +367,34 @@ function loadPersist(state){
       this.vx += clamp(desiredVX - this.vx, -this.accel*dt, this.accel*dt);
       this.vy += clamp(desiredVY - this.vy, -this.accel*dt, this.accel*dt);
       this.x += this.vx * dt; this.y += this.vy * dt;
+
       for(const o of state.enemies){ if(o===this) continue; const dd = Math.hypot(this.x-o.x,this.y-o.y); if(dd>0 && dd < this.size+o.size+6){ const push=(this.size+o.size+6 - dd)*0.18; this.x += (this.x-o.x)/dd * push; this.y += (this.y-o.y)/dd * push; } }
+
       if(Math.hypot(this.x - MAP_W/2, this.y - MAP_H/2) < 28){
-        if(state.stash){
-          state.stash.hp -= 8 * dt; if(state.stash.hp <= 0){ state.stash.hp = 0; }
-        }
+        if(state.stash){ state.stash.hp -= 8 * dt; if(state.stash.hp <= 0){ state.stash.hp = 0; } }
         state.lives = Math.max(0, state.lives - 1);
         this.hp = 0;
-        state.player.hp -= 20;
+        if(state.player){ state.player.hp -= 20; }
         updateHUD();
-        if(state.player.hp <= 0){
+        if(state.player && state.player.hp <= 0){
           state.player.hp = 100; state.player.x = MAP_W/2 + 48; state.player.y = MAP_H/2 + 8; showHUDMessage('You died — respawned',1500);
         }
       }
+      const obstacles2 = [...state.towers, ...state.mines];
+      if(state.player) obstacles2.push(state.player);
+      for(const o of obstacles2){
+        if(!o || !o.size) continue;
+        const d = Math.hypot(o.x - this.x, o.y - this.y);
+        if(d < this.size + o.size){ if(o.hp !== undefined){ o.hp -= 10 * dt; } }
+      }
     }
-    draw(offX,offY){ const sx = this.x - offX, sy = this.y - offY; if(sx < -50 || sx > canvas.width+50 || sy < -50 || sy > canvas.height+50) return; ctx.save(); ctx.translate(sx, sy); ctx.fillStyle = (this.type==='runner'? '#ff8c6b': this.type==='tank'? '#aa6' : '#9a9'); ctx.beginPath(); ctx.arc(0,0,this.size,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+    draw(offX,offY){ const sx = this.x - offX, sy = this.y - offY; if(sx < -60 || sx > canvas.width+60 || sy < -60 || sy > canvas.height+60) return; ctx.save(); ctx.translate(sx, sy); ctx.fillStyle = (this.type==='runner'? '#ff8c6b': this.type==='tank'? '#aa6' : '#9a9'); ctx.beginPath(); ctx.arc(0,0,this.size,0,Math.PI*2); ctx.fill(); ctx.restore(); }
   }
 
-  // --- State & costs ---
+  // --- Constants & state ---
+  const MAP_W = 2000, MAP_H = 1400;
+  const COSTS = { mine:{wood:20,stone:10}, fire:{wood:30,stone:15}, cold:{wood:25,stone:20}, poison:{wood:40,stone:25} };
+
   const state = {
     player:null, cam:{x:0,y:0},
     resourceNodes:[], towers:[], mines:[], stash:null,
@@ -407,18 +403,10 @@ function loadPersist(state){
     timeOfDay:0, cycleDay:60, cycleNight:40, inNight:false, wave:0, lives:10,
     selectedBuild:null, selectedObject:null,
     handCooldown:0, handMax:0.5, handRange:42,
-    selectedTool: 'hand'   // <-- add this line
+    selectedTool: 'hand'
   };
 
-  const COSTS = {
-    mine: { wood:20, stone:10 },
-    fire: { wood:30, stone:15 },
-    cold: { wood:25, stone:20 },
-    poison: { wood:40, stone:25 }
-  };
-
-  // --- Key gameplay functions (no duplicates) ---
-
+  // --- Core functions ---
   function updateBullets(dt){
     for(let i=state.bullets.length-1;i>=0;i--){
       const b = state.bullets[i];
@@ -469,15 +457,15 @@ function loadPersist(state){
   }
 
   function playerHandAction(){
-    if(state.handCooldown > 0){ showHUDMessage('Hand cooling down', 900); return; }
+    if(state.handCooldown > 0){ showHUDMessage('Tool cooling down', 900); return; }
     state.handCooldown = state.handMax; state.player.swing = 0.22;
-// harvest nodes near player — only if tool is axe
-if(state.selectedTool === 'axe'){
-  for(const r of state.resourceNodes){
-    const d = Math.hypot(r.x - state.player.x, r.y - state.player.y);
-    if(d < state.handRange + r.size){ r.harvest(state); updateHUD(); return; }
-  }
-}
+    // harvest nodes near player — only if tool is axe
+    if(state.selectedTool === 'axe'){
+      for(const r of state.resourceNodes){
+        const d = Math.hypot(r.x - state.player.x, r.y - state.player.y);
+        if(d < state.handRange + r.size){ r.harvest(state); updateHUD(); return; }
+      }
+    }
     // mines withdraw
     for(const m of state.mines){
       const d = Math.hypot(m.x - state.player.x, m.y - state.player.y);
@@ -494,7 +482,7 @@ if(state.selectedTool === 'axe'){
         if(dep > 0){ state.gold -= dep; state.stash.stored = (state.stash.stored||0) + dep; savePersist(state); updateHUD(); showHUDMessage(`Deposited ${dep} gold`); return; }
       }
     }
-    // hit enemies
+    // hit enemies (works with both tools)
     let hit=null, hd=9999;
     for(const e of state.enemies){
       const d = Math.hypot(e.x - state.player.x, e.y - state.player.y);
@@ -504,12 +492,7 @@ if(state.selectedTool === 'axe'){
     showHUDMessage('Nothing to hit or harvest', 900);
   }
 
-  function snapToGrid(wx,wy){
-    const grid = 20;
-    const snappedX = Math.round(wx / grid) * grid;
-    const snappedY = Math.round(wy / grid) * grid;
-    return { x: snappedX, y: snappedY };
-  }
+  function snapToGrid(wx,wy){ const grid = 20; return { x: Math.round(wx / grid) * grid, y: Math.round(wy / grid) * grid }; }
 
   function canPlace(x,y, radius=28){
     if(Math.hypot(x - MAP_W/2, y - MAP_H/2) < 80) return false;
@@ -524,12 +507,11 @@ if(state.selectedTool === 'axe'){
   function placeSelectedBuild(wx,wy){
     const sb = state.selectedBuild;
     if(!sb){ showHUDMessage('No building selected', 900); return; }
-    const snapped = snapToGrid(wx,wy);
-    wx = snapped.x; wy = snapped.y;
+    const snapped = snapToGrid(wx,wy); wx = snapped.x; wy = snapped.y;
     if(sb === 'stash'){
       if(state.stash){ showHUDMessage('Stash already exists', 1200); return; }
       if(!canPlace(wx,wy,36)){ showHUDMessage('Cannot place stash there', 1200); return; }
-      state.stash = { x:wx, y:wy, size:20, hp:450, stored:0, level:0 };
+      state.stash = { x:wx, y:wy, size:20, hp:450, stored:0 };
       state.selectedBuild = null; savePersist(state); showHUDMessage('Gold Stash placed', 1200); return;
     }
     if(!state.stash){ showHUDMessage('Build a Gold Stash first', 1200); return; }
@@ -550,202 +532,102 @@ if(state.selectedTool === 'axe'){
     }
   }
 
-// Show action panel for selected object (positions near screen coords)
-
-
-// --- Upgrade helper functions (added) ---
-function computeUpgradeCostForTower(t){
-  const base = { fire:{w:30,s:15}, cold:{w:25,s:20}, poison:{w:40,s:25} }[t.kind] || {w:30,s:15};
-  const scaleW = 0.7, scaleS = 0.6;
-  const costW = Math.ceil(base.w * (1 + (t.level||1) * scaleW));
-  const costS = Math.ceil(base.s * (1 + (t.level||1) * scaleS));
-  const costG = Math.ceil(150 * (t.level || 1));
-  return { wood: costW, stone: costS, gold: costG };
-}
-function computeUpgradeCostForMine(m){
-  const lvl = m.level || 1;
-  const costGold = Math.ceil(120 * lvl);
-  const costWood = Math.ceil(8  * lvl);
-  const costStone = Math.ceil(6 * lvl);
-  return { gold: costGold, wood: costWood, stone: costStone };
-}
-function computeUpgradeCostForStash(stash){
-  const lvl = stash.level || 0;
-  const costGold = 1000 * (lvl + 1);
-  return { gold: costGold };
-}
-function simulateUpgradeStats(t){
-  const newDmg = Math.round((t.dmg || 10) * 1.25);
-  const newRange = Math.round((t.range || 150) * 1.10);
-  const newRate = Number(Math.max(0.18, (t.rate || 1.0) * 0.92).toFixed(2));
-  return { dmg: newDmg, range: newRange, rate: newRate };
-}
-function formatStatLine(label, oldVal, newVal){
-  const delta = (typeof oldVal === 'number') ? (newVal - oldVal) : '';
-  const deltaText = (delta === '' ? '' : ` <span class="delta">(${delta>0?'+':''}${delta})</span>`);
-  return `<div><span class="old">${label}: ${oldVal}</span><span class="new"> → ${newVal}</span>${deltaText}</div>`;
-}
-// --- end helpers ---
-
-
-function showActionPanel(title, obj){
-  actionTitle.textContent = title;
-  let lines = [];
-  upgradePreview.innerHTML = '';
-  if(title === 'Gold Stash'){
-    lines.push(`HP: ${Math.round(obj.hp||0)}`);
-    lines.push(`Stored: ${obj.stored||0} gold`);
-    const upCost = computeUpgradeCostForStash(obj);
-    lines.push(`Upgrade cost → ${upCost.gold}💰`);
-    actionUpgradeBtn.style.display = 'inline-block';
-    upgradePreview.style.display = 'block';
-    upgradePreview.innerHTML = `<div class="old">Level: ${obj.level||0}</div><div class="new"> → ${ (obj.level||0) + 1 }</div>`;
-    const stashMax = 5;
-    if((obj.level||0) >= stashMax) { actionUpgradeBtn.disabled = true; actionInfo.textContent = 'Stash at max level'; }
-    else actionUpgradeBtn.disabled = !(state.gold >= upCost.gold);
+  // --- Upgrade preview helpers ---
+  function computeUpgradeCostForTower(t){
+    const base = { fire:{w:30,s:15}, cold:{w:25,s:20}, poison:{w:40,s:25} }[t.kind] || {w:30,s:15};
+    const scaleW = 0.7, scaleS = 0.6;
+    const costW = Math.ceil(base.w * (1 + (t.level||1) * scaleW));
+    const costS = Math.ceil(base.s * (1 + (t.level||1) * scaleS));
+    return { wood: costW, stone: costS };
   }
-  else if(title === 'Mine'){
-    lines.push(`Accum: ${Math.floor(obj.accum||0)} gold`);
-    const upCost = computeUpgradeCostForMine(obj);
-    if(!state.stash || (state.stash.level||0) < 1){
-      lines.push('Upgrade locked — upgrade Gold Stash first');
+
+  function simulateUpgradeStats(t){
+    const newLevel = (t.level || 1) + 1;
+    const newDmg = Math.round((t.dmg || 10) * 1.25);
+    const newRange = Math.round((t.range || 150) * 1.10);
+    const newRate = Math.max(0.18, (t.rate || 1.0) * 0.92);
+    return { level: newLevel, dmg: newDmg, range: newRange, rate: Number(newRate.toFixed(2)) };
+  }
+
+  function formatStatLine(label, oldVal, newVal){
+    // returns HTML string for upgradePreview element
+    const delta = (typeof oldVal === 'number') ? (newVal - oldVal) : '';
+    const deltaText = (delta === '' ? '' : ` <span class="delta">(${delta>0?'+':''}${delta})</span>`);
+    return `<div><span class="old">${label}: ${oldVal}</span><span class="new"> → ${newVal}</span>${deltaText}</div>`;
+  }
+
+  // --- Action panel update (with per-tower preview) ---
+  function showActionPanel(title, obj){
+    actionTitle.textContent = title;
+    let lines = [];
+    upgradePreview.innerHTML = '';
+    if(title === 'Gold Stash'){
+      lines.push(`HP: ${Math.round(obj.hp||0)}`);
+      lines.push(`Stored: ${obj.stored||0} gold`);
       actionUpgradeBtn.style.display = 'none';
       upgradePreview.style.display = 'none';
-    } else {
-      lines.push(`Upgrade cost → ${upCost.gold}💰 ${upCost.wood}🪵 ${upCost.stone}🪨`);
-      const simLvl = (obj.level||1) + 1;
-      upgradePreview.style.display = 'block';
-      upgradePreview.innerHTML = `<div class="old">Level: ${obj.level||1}</div><div class="new"> → ${simLvl}</div>`;
-      actionUpgradeBtn.style.display = 'inline-block';
-      actionUpgradeBtn.disabled = ((obj.level||1) >= 5) || !(state.gold >= upCost.gold && state.wood >= upCost.wood && state.stone >= upCost.stone);
-      if((obj.level||1) >= 5) lines.push('Mine is MAX level');
     }
-  }
-  else if(title === 'Tower'){
-    lines.push(`Kind: ${obj.kind}  Level: ${obj.level||1}`);
-    lines.push(`Dmg: ${Math.round(obj.dmg||0)}  Rate: ${Number((obj.rate||1).toFixed(2))}s  Range: ${Math.round(obj.range||0)}`);
-    const upCost = computeUpgradeCostForTower(obj);
-    if(!state.stash || (state.stash.level||0) < 1){
-      lines.push('Upgrade locked — upgrade Gold Stash first');
+    else if(title === 'Mine'){
+      lines.push(`Accum: ${Math.floor(obj.accum||0)} gold`);
       actionUpgradeBtn.style.display = 'none';
       upgradePreview.style.display = 'none';
-    } else {
-      lines.push(`Upgrade cost → ${upCost.gold}💰 ${upCost.wood}🪵 ${upCost.stone}🪨`);
-      const sim = simulateUpgradeStats(obj);
+    }
+    else if(title === 'Tower'){
+      lines.push(`Kind: ${obj.kind}  Level: ${obj.level||1}`);
+      lines.push(`Dmg: ${Math.round(obj.dmg||0)}  Rate: ${Number((obj.rate||1).toFixed(2))}s  Range: ${Math.round(obj.range||0)}`);
+      const upCost = computeUpgradeCostForTower(obj);
+      lines.push(`Upgrade cost → ${upCost.wood}🪵 ${upCost.stone}🪨`);
+      actionUpgradeBtn.style.display = 'inline-block';
       upgradePreview.style.display = 'block';
+      // compute preview lines
+      const sim = simulateUpgradeStats(obj);
       upgradePreview.innerHTML =
         formatStatLine('Damage', Math.round(obj.dmg||0), sim.dmg) +
         formatStatLine('Rate (s)', Number((obj.rate||1).toFixed(2)), sim.rate) +
         formatStatLine('Range', Math.round(obj.range||0), sim.range);
-      actionUpgradeBtn.style.display = 'inline-block';
-      actionUpgradeBtn.disabled = ((obj.level||1) >= 5) || !(state.gold >= upCost.gold && state.wood >= upCost.wood && state.stone >= upCost.stone);
-      if((obj.level||1) >= 5) lines.push('Tower is MAX level');
+      // enable/disable upgrade button depending on resources
+      actionUpgradeBtn.disabled = !(state.wood >= upCost.wood && state.stone >= upCost.stone);
+      actionUpgradeBtn._cost = upCost; // stash cost for quick access
     }
-  }
-  actionInfo.textContent = lines.join(' • ');
-  const sx = Math.round(obj.x - state.cam.x);
-  const sy = Math.round(obj.y - state.cam.y);
-  const panelX = clamp(sx + 16, 8, canvas.width - 260);
-  const panelY = clamp(sy - 10, 8, canvas.height - 140);
-  actionPanel.style.left = panelX + 'px';
-  actionPanel.style.top  = panelY + 'px';
-  actionPanel.style.display = 'flex';
-}
-
-// Sell button
-actionSellBtn.addEventListener('click', () => {
-  if(!state.selectedObject) { showHUDMessage('No object to sell',900); actionPanel.style.display='none'; return; }
-  sellSelected();
-  actionPanel.style.display = 'none';
-  updateHUD();
-});
-
-// Close button
-actionCloseBtn.addEventListener('click', () => {
-  actionPanel.style.display = 'none';
-});
-
-// Upgrade button wiring
-if(typeof actionUpgradeBtn !== 'undefined' && actionUpgradeBtn !== null){ actionUpgradeBtn.addEventListener('click', upgradeSelected); }
-
-
-// --- Upgrade selected handler (handles stash, mines, towers) ---
-function upgradeSelected(){
-  if(!state.selectedObject){ showHUDMessage('No object selected',900); return; }
-
-  if(state.selectedObject.type === 'stash'){
-    const s = state.selectedObject.obj;
-    const upCost = computeUpgradeCostForStash(s);
-    const stashMax = 5;
-    if((s.level||0) >= stashMax){ showHUDMessage('Stash already max level',900); return; }
-    if(state.gold < upCost.gold){ showHUDMessage('Not enough gold for stash upgrade',900); return; }
-    state.gold -= upCost.gold;
-    s.level = (s.level||0) + 1;
-    s.hp = Math.round((s.hp||450) * 1.15);
-    savePersist(state); updateHUD();
-    showHUDMessage(`Gold Stash upgraded to L${s.level} — Towers & Mines unlocked`, 1800);
-    showActionPanel('Gold Stash', s);
-    return;
+    actionInfo.textContent = lines.join(' • ');
+    const sx = Math.round(obj.x - state.cam.x);
+    const sy = Math.round(obj.y - state.cam.y);
+    const panelX = clamp(sx + 16, 8, canvas.width - 260);
+    const panelY = clamp(sy - 10, 8, canvas.height - 140);
+    actionPanel.style.left = panelX + 'px';
+    actionPanel.style.top  = panelY + 'px';
+    actionPanel.style.display = 'flex';
   }
 
-  if(state.selectedObject.type === 'mine'){
-    const m = state.selectedObject.obj;
-    if(!state.stash || (state.stash.level||0) < 1){ showHUDMessage('Upgrade locked — upgrade Gold Stash first',1000); return; }
-    const upCost = computeUpgradeCostForMine(m);
-    if((m.level||1) >= 5){ showHUDMessage('Mine is already max level',900); return; }
-    if(!(state.gold >= upCost.gold && state.wood >= upCost.wood && state.stone >= upCost.stone)){ showHUDMessage('Not enough resources for mine upgrade',900); return; }
-    state.gold -= upCost.gold; state.wood -= upCost.wood; state.stone -= upCost.stone;
-    m.level = (m.level||1) + 1;
-    m.goldPerSec = Math.round(m.goldPerSec * 1.35 * 100)/100;
-    savePersist(state); updateHUD();
-    showHUDMessage(`Mine upgraded to L${m.level}`, 1200);
-    showActionPanel('Mine', m);
-    return;
-  }
-
-  if(state.selectedObject.type === 'tower'){
+  function upgradeSelected(){
+    if(!state.selectedObject || state.selectedObject.type !== 'tower'){
+      showHUDMessage('No tower selected', 900); return;
+    }
     const t = state.selectedObject.obj;
-    if(!state.stash || (state.stash.level||0) < 1){ showHUDMessage('Upgrade locked — upgrade Gold Stash first',1000); return; }
-    if((t.level||1) >= 5){ showHUDMessage('Tower is already max level',900); return; }
     const upCost = computeUpgradeCostForTower(t);
-    if(!(state.gold >= upCost.gold && state.wood >= upCost.wood && state.stone >= upCost.stone)){ showHUDMessage('Not enough resources for tower upgrade',900); return; }
-    state.gold -= upCost.gold; state.wood -= upCost.wood; state.stone -= upCost.stone;
+    if(state.wood < upCost.wood || state.stone < upCost.stone){
+      showHUDMessage('Not enough resources', 900); return;
+    }
+    state.wood -= upCost.wood;
+    state.stone -= upCost.stone;
     t.level = (t.level || 1) + 1;
     t.dmg = Math.round((t.dmg || 10) * 1.25);
     t.range = Math.round((t.range || 150) * 1.10);
     t.rate = Math.max(0.18, (t.rate || 1.0) * 0.92);
-    savePersist(state); updateHUD();
-    showHUDMessage(`${t.kind.charAt(0).toUpperCase()+t.kind.slice(1)} Tower upgraded to L${t.level}`, 1400);
+    savePersist(state); updateHUD(); showHUDMessage(`${t.kind.charAt(0).toUpperCase()+t.kind.slice(1)} Tower upgraded to L${t.level}`, 1400);
     showActionPanel('Tower', t);
-    return;
   }
-}
 
-function pickAt(wx,wy){
-  state.selectedObject = null;
-  for(const t of state.towers) if(Math.hypot(t.x - wx, t.y - wy) < 22){
-    state.selectedObject = {type:'tower', obj:t};
-    showHUDMessage(`Selected tower (${t.kind})`,1100);
-    showActionPanel('Tower', t, wx, wy);
-    return;
+  // --- Clicking/picking & sell ---
+  function pickAt(wx,wy){
+    state.selectedObject = null;
+    for(const t of state.towers) if(Math.hypot(t.x - wx, t.y - wy) < 22){ state.selectedObject = {type:'tower', obj:t}; showHUDMessage(`Selected tower (${t.kind})`,1100); showActionPanel('Tower', t); return; }
+    for(const m of state.mines) if(Math.hypot(m.x - wx, m.y - wy) < 22){ state.selectedObject = {type:'mine', obj:m}; showHUDMessage('Selected mine',1100); showActionPanel('Mine', m); return; }
+    if(state.stash && Math.hypot(state.stash.x - wx, state.stash.y - wy) < 28){ state.selectedObject = {type:'stash', obj: state.stash}; showHUDMessage('Selected stash',1100); showActionPanel('Gold Stash', state.stash); return; }
+    state.selectedObject = null;
+    actionPanel.style.display = 'none';
+    showHUDMessage('No building selected', 1000);
   }
-  for(const m of state.mines) if(Math.hypot(m.x - wx, m.y - wy) < 22){
-    state.selectedObject = {type:'mine', obj:m};
-    showHUDMessage('Selected mine',1100);
-    showActionPanel('Mine', m, wx, wy);
-    return;
-  }
-  if(state.stash && Math.hypot(state.stash.x - wx, state.stash.y - wy) < 28){
-    state.selectedObject = {type:'stash', obj: state.stash};
-    showHUDMessage('Selected stash',1100);
-    showActionPanel('Gold Stash', state.stash, wx, wy);
-    return;
-  }
-  // clicked empty ground
-  state.selectedObject = null;
-  actionPanel.style.display = 'none';
-  showHUDMessage('No building selected', 1000);
-}
 
   function sellSelected(){
     if(!state.selectedObject){ showHUDMessage('No building selected', 900); return; }
@@ -756,75 +638,45 @@ function pickAt(wx,wy){
       const refundS = Math.floor(base.s * 0.5 * t.level);
       state.wood += refundW; state.stone += refundS;
       const idx = state.towers.indexOf(t); if(idx>=0) state.towers.splice(idx,1);
-      savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage(`Sold tower +${refundW}🪵 +${refundS}🪨`,1200); return;
+      savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage(`Sold tower +${refundW}🪵 +${refundS}🪨`,1200); actionPanel.style.display='none'; return;
     }
     if(state.selectedObject.type === 'mine'){
       state.wood += Math.floor(COSTS.mine.wood * 0.5); state.stone += Math.floor(COSTS.mine.stone * 0.5);
       const m = state.selectedObject.obj; const idx = state.mines.indexOf(m); if(idx>=0) state.mines.splice(idx,1);
-      savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage('Sold mine',1200); return;
+      savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage('Sold mine',1200); actionPanel.style.display='none'; return;
     }
     if(state.selectedObject.type === 'stash'){
-      if(confirm('Destroying stash will wipe towers & mines (keeps your gold & resources). Proceed?')){
-        state.stash = null; state.towers=[]; state.mines=[]; savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage('Stash destroyed — base wiped',1300);
-      }
+      if(confirm('Destroying stash will wipe towers & mines (keeps your gold & resources). Proceed?')){ state.stash = null; state.towers=[]; state.mines=[]; savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage('Stash destroyed — base wiped',1300); actionPanel.style.display='none'; }
       return;
     }
   }
 
   function autoMouseHoldAction(dt){
-    if(mouse.down){
-      if(state.handCooldown <= 0){
-        playerHandAction();
-        state.handCooldown = state.handMax;
-      }
-    }
+    if(mouse.down){ if(state.handCooldown <= 0){ playerHandAction(); state.handCooldown = state.handMax; } }
   }
 
-  // --- Update & draw loop ---
+  // --- Update & draw ---
   function update(dt){
-    // day/night
     updateDayNight(dt);
-    // cooldowns
     if(state.handCooldown > 0) state.handCooldown = Math.max(0, state.handCooldown - dt);
-    // auto-hit while holding mouse
     autoMouseHoldAction(dt);
-    // player
-    state.player.update(dt);
-    // resources
+    if(state.player) state.player.update(dt);
     for(const r of state.resourceNodes) r.update(dt);
-    // towers
     for(const t of state.towers) t.update(dt);
-    // mines
     for(const m of state.mines) m.update(dt);
-    // auto-collect gold from mines
     for(const m of state.mines){
       const amt = m.accum;
-      if(amt >= 1){
-        state.gold += Math.floor(amt);
-        m.accum = 0;
-        savePersist(state);
-        showHUDMessage(`+${Math.floor(amt)} gold (auto)`, 600);
-        updateHUD();
-      }
+      if(amt >= 1){ state.gold += Math.floor(amt); m.accum = 0; savePersist(state); showHUDMessage(`+${Math.floor(amt)} gold (auto)`, 600); updateHUD(); }
     }
-    // enemies
     for(const e of state.enemies) e.update(dt);
-    // bullets
     updateBullets(dt);
-    // dead enemies & gold reward
     for(let i=state.enemies.length-1;i>=0;i--){
       const e = state.enemies[i];
-      if(e.hp <= 0){
-        state.gold += (e.type==='tank'?40: e.type==='runner'?12:10);
-        state.enemies.splice(i,1); savePersist(state); showHUDMessage('+ gold', 700);
-      }
+      if(e.hp <= 0){ state.gold += (e.type==='tank'?40: e.type==='runner'?12:10); state.enemies.splice(i,1); savePersist(state); showHUDMessage('+ gold', 700); }
     }
-    // stash destroyed: wipe base
     if(state.stash && state.stash.hp <= 0){
-      state.stash = null; state.towers = []; state.mines = []; state.player.x = MAP_W/2 + 48; state.player.y = MAP_H/2 + 8;
-      savePersist(state); showHUDMessage('Stash destroyed — base wiped', 1800);
+      state.stash = null; state.towers = []; state.mines = []; state.player.x = MAP_W/2 + 48; state.player.y = MAP_H/2 + 8; savePersist(state); showHUDMessage('Stash destroyed — base wiped', 1800);
     }
-    // camera follow & clamp
     state.cam.x = clamp(state.player.x - canvas.width/2, 0, MAP_W - canvas.width);
     state.cam.y = clamp(state.player.y - canvas.height/2, 0, MAP_H - canvas.height);
     updateHUD();
@@ -834,34 +686,38 @@ function pickAt(wx,wy){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.fillStyle = state.inNight ? '#05151a' : '#0b2630'; ctx.fillRect(0,0,canvas.width,canvas.height);
     const offX = state.cam.x, offY = state.cam.y;
-    // soft grid
     ctx.save(); ctx.globalAlpha = 0.06; ctx.fillStyle = '#fff';
     const step = 40; for(let gx = - (offX % step); gx < canvas.width; gx += step) ctx.fillRect(gx, 0, 1, canvas.height);
     for(let gy = - (offY % step); gy < canvas.height; gy += step) ctx.fillRect(0, gy, canvas.width, 1);
     ctx.restore();
-    // base
     const bx = MAP_W/2 - offX, by = MAP_H/2 - offY;
     ctx.save(); ctx.translate(bx, by); ctx.fillStyle = '#3b6'; roundRect(-40,-40,80,80,10,true); ctx.fillStyle='#072'; ctx.fillRect(-12,-12,24,24); ctx.restore();
-    // resources
     for(const r of state.resourceNodes) r.draw(offX, offY);
-    // mines
     for(const m of state.mines) m.draw(offX, offY);
-    // stash
     if(state.stash){ const sx = state.stash.x - offX, sy = state.stash.y - offY; ctx.save(); ctx.translate(sx, sy); ctx.fillStyle = '#ffd36b'; roundRect(-18,-14,36,28,6,true); ctx.fillStyle='#000'; ctx.font='12px monospace'; ctx.fillText('STASH', -16, 4); ctx.restore(); }
-    // towers
-    for(const t of state.towers) t.draw(offX, offY, state.selectedObject && state.selectedObject.type==='tower' && state.selectedObject.obj === t);
-    // player
-    state.player.draw(offX, offY);
-    // enemies
+    for(const t of state.towers){
+      t.draw(offX, offY, state.selectedObject && state.selectedObject.type==='tower' && state.selectedObject.obj === t);
+      // draw range circle if tower is selected
+      if(state.selectedObject && state.selectedObject.type === 'tower' && state.selectedObject.obj === t){
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        ctx.strokeStyle = '#ffd36b';
+        ctx.lineWidth = 2;
+        const sx = t.x - state.cam.x;
+        const sy = t.y - state.cam.y;
+        ctx.beginPath();
+        ctx.arc(sx, sy, t.range || 160, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+    if(state.player) state.player.draw(offX, offY);
     for(const e of state.enemies) e.draw(offX, offY);
-    // bullets
     ctx.fillStyle = '#ffd';
     for(const b of state.bullets){ const bx = b.x - offX, by = b.y - offY; if(bx < -50 || bx > canvas.width+50 || by < -50 || by > canvas.height+50) continue; ctx.beginPath(); ctx.arc(bx,by,4,0,Math.PI*2); ctx.fill(); }
-    // canvas small HUD
     ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(12, canvas.height - 46, 560, 36);
     ctx.fillStyle = '#fff'; ctx.font = '13px monospace';
     ctx.fillText('Enemies: ' + state.enemies.length + '  Towers: ' + state.towers.length + '  Mines: ' + state.mines.length, 18, canvas.height - 22);
-    // placement ghost
     if(state.selectedBuild){
       const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y;
       const snap = snapToGrid(wx,wy);
@@ -869,7 +725,6 @@ function pickAt(wx,wy){
       ctx.save(); ctx.globalAlpha = 0.95; ctx.fillStyle = '#fff'; roundRect(sx - 20, sy - 16, 40, 32, 6, true);
       ctx.fillStyle = '#000'; ctx.font = '12px monospace'; ctx.fillText(state.selectedBuild.toUpperCase(), sx - 18, sy + 4); ctx.restore();
     }
-    // night tint
     if(state.inNight){ ctx.fillStyle = 'rgba(5,10,20,0.22)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
   }
 
@@ -877,8 +732,8 @@ function pickAt(wx,wy){
     HUD_gold.textContent = Math.floor(state.gold);
     HUD_wood.textContent = Math.floor(state.wood);
     HUD_stone.textContent = Math.floor(state.stone);
-    HUD_hpText.textContent = `${Math.max(0,Math.round(state.player.hp))}/100`;
-    HUD_hpFill.style.width = `${clamp(state.player.hp/100, 0, 1)*100}%`;
+    HUD_hpText.textContent = `${Math.max(0,Math.round(state.player?state.player.hp:100))}/100`;
+    HUD_hpFill.style.width = `${clamp((state.player?state.player.hp:100)/100, 0, 1)*100}%`;
     HUD_wave.textContent = state.wave;
     HUD_lives.textContent = state.lives;
   }
@@ -900,113 +755,70 @@ function pickAt(wx,wy){
     showHUDMessage('World ready. Build a Gold Stash first (🏆).', 2500);
   }
 
-  // --- Input & UI wiring ---
-  bindBuildButtons = bindBuildButtons; // ensure function exists in this scope
-  try {
-    const buildButtons = document.querySelectorAll('.shop-btn');
-    buildButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const kind = btn.dataset.build;
-        if(kind) { state.selectedBuild = kind; showHUDMessage('Selected: ' + kind, 1200); }
-      });
-      btn.addEventListener('mouseenter', () => {
-        const t = btn.getAttribute('title') || btn.dataset.build || '';
-        showTooltip(t || ' ');
-      });
-      btn.addEventListener('mouseleave', hideTooltip);
-    });
-  } catch(e){ console.warn('shop bind failed', e); }
+  // --- UI wiring (safe order) ---
+  bindBuildButtons((kind) => { state.selectedBuild = kind; state.selectedTool = 'hand'; showHUDMessage('Selected: ' + kind, 1200); });
 
-  const forceBtn = document.getElementById('forceNightBtn');
-  const wipeBtn = document.getElementById('wipeBaseBtn');
-  const sellBtn = document.getElementById('sellBtn');
   if(forceBtn) forceBtn.addEventListener('click', () => { state.timeOfDay = state.cycleDay + 0.01; showHUDMessage('Forced night'); });
   if(wipeBtn) wipeBtn.addEventListener('click', () => { if(confirm('Wipe towers & mines?')){ state.towers=[]; state.mines=[]; state.stash=null; savePersist(state); showHUDMessage('Base wiped'); updateHUD(); }});
   if(sellBtn) sellBtn.addEventListener('click', () => { sellSelected(); updateHUD(); });
 
-// Tool buttons: Hand / Axe
-const toolHandBtn = document.getElementById('toolHand');
-const toolAxeBtn  = document.getElementById('toolAxe');
-const actionPanel  = document.getElementById('actionPanel');
-const actionTitle  = document.getElementById('actionTitle');
-const actionInfo   = document.getElementById('actionInfo');
-const upgradePreview = document.getElementById('upgradePreview');
-const actionSellBtn = document.getElementById('actionSellBtn');
-const actionUpgradeBtn = document.getElementById('actionUpgradeBtn');
-const actionCloseBtn = document.getElementById('actionCloseBtn');
+  if(toolHandBtn) toolHandBtn.addEventListener('click', () => { state.selectedTool = 'hand'; state.selectedBuild = null; actionPanel.style.display='none'; showHUDMessage('Tool: Hand',900); });
+  if(toolAxeBtn)  toolAxeBtn.addEventListener('click',  () => { state.selectedTool = 'axe';  state.selectedBuild = null; actionPanel.style.display='none'; showHUDMessage('Tool: Axe',900); });
 
-if(toolHandBtn) toolHandBtn.addEventListener('click', () => {
-  state.selectedTool = 'hand';
-  state.selectedBuild = null;          // deselect building placement
-  actionPanel.style.display = 'none';  // hide action UI
-  showHUDMessage('Tool: Hand', 900);
-});
-if(toolAxeBtn) toolAxeBtn.addEventListener('click', () => {
-  state.selectedTool = 'axe';
-  state.selectedBuild = null;          // deselect building placement
-  actionPanel.style.display = 'none';
-  showHUDMessage('Tool: Axe', 900);
-});
+  actionSellBtn.addEventListener('click', () => { sellSelected(); updateHUD(); });
+  actionCloseBtn.addEventListener('click', () => { actionPanel.style.display='none'; });
+  if(actionUpgradeBtn) actionUpgradeBtn.addEventListener('click', () => { upgradeSelected(); });
 
   canvas.addEventListener('dblclick', () => { const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y; placeSelectedBuild(wx,wy); });
-  canvas.addEventListener('click', () => {
-    const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y;
-    if(state.selectedBuild){ placeSelectedBuild(wx,wy); } else { pickAt(wx,wy); }
-  });
+  canvas.addEventListener('click', () => { const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y; if(state.selectedBuild){ placeSelectedBuild(wx,wy); } else { pickAt(wx,wy); }});
   canvas.addEventListener('mousedown', (e) => { if(e.button===0) playerHandAction(); });
+
   document.addEventListener('keydown', (e) => {
     if(e.key === ' ') { playerHandAction(); e.preventDefault(); }
-    if(e.key === '1') state.selectedBuild = 'stash';
-    if(e.key === '2') state.selectedBuild = 'mine';
-    if(e.key === '3') state.selectedBuild = 'fire';
-    if(e.key === '4') state.selectedBuild = 'cold';
-    if(e.key === '5') state.selectedBuild = 'poison';
-    if(e.key.toLowerCase() === 'e'){ const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y; let acted=false;
-      for(const r of state.resourceNodes){ if(Math.hypot(r.x - wx, r.y - wy) < r.size + 12){ r.harvest(state); updateHUD(); acted=true; break; } }
+    if(e.key === '1') { state.selectedBuild = 'stash'; state.selectedTool='hand'; }
+    if(e.key === '2') { state.selectedBuild = 'mine'; state.selectedTool='hand'; }
+    if(e.key === '3') { state.selectedBuild = 'fire'; state.selectedTool='hand'; }
+    if(e.key === '4') { state.selectedBuild = 'cold'; state.selectedTool='hand'; }
+    if(e.key === '5') { state.selectedBuild = 'poison'; state.selectedTool='hand'; }
+    if(e.key.toLowerCase() === 'e'){
+      const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y; let acted=false;
+      for(const r of state.resourceNodes){ if(Math.hypot(r.x - wx, r.y - wy) < r.size + 12){ if(state.selectedTool==='axe'){ r.harvest(state); updateHUD(); acted=true; break; } else { showHUDMessage('Need Axe to harvest',900); acted=true; break; } } }
       if(!acted){ for(const m of state.mines){ if(Math.hypot(m.x - wx, m.y - wy) < m.size + 12){ const amt=Math.floor(m.accum); if(amt>0){ state.gold += amt; m.accum=0; savePersist(state); updateHUD(); showHUDMessage(`+${amt} gold`); acted=true; break; } } } }
       if(!acted) showHUDMessage('Nothing to harvest here', 900);
     }
     if(e.key.toLowerCase() === 'r'){ if(confirm('Reset world? Resources & gold will remain.')) initWorld(); }
   });
 
-  // --- Loop & safety ---
+  // --- Main loop ---
   let last = performance.now();
   function loop(now){
     try {
       const dt = Math.min(0.06, (now - last)/1000); last = now;
-      if(state.player === null){ /* not initialized yet */ }
-      update(dt);
-      draw();
-      updateHUDMessageTimer(dt);
+      update(dt); draw(); updateHUDMessageTimer(dt);
     } catch(err){
-      console.error('Runtime error in loop:', err);
-      // show visible error message on canvas
-      ctx.save();
-      ctx.setTransform(1,0,0,1,0,0);
+      console.error('Runtime error:', err);
+      ctx.save(); ctx.setTransform(1,0,0,1,0,0);
       ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle = '#fff'; ctx.font = '16px monospace';
-      ctx.fillText('Runtime error occurred. See console for details.', 10, 30);
+      ctx.fillStyle = '#fff'; ctx.font = '16px monospace'; ctx.fillText('Runtime error — check console', 10, 30);
       ctx.restore();
-      return; // stop loop to avoid spam
+      return;
     }
     requestAnimationFrame(loop);
   }
 
-  // --- Start ---
+  // --- Startup ---
   try {
     initWorld();
-    // minor startup enemy to show alive state
     spawnWave(0);
     requestAnimationFrame(loop);
     window._zstate = state;
-    console.log('Game initialized. window._zstate available for debugging.');
+    console.log('Game started. window._zstate available.');
   } catch(err){
-    console.error('Initialization failed:', err);
+    console.error('Init failed:', err);
     showHUDMessage('Init failed — check console', 6000);
   }
 
-  // expose some helpers for debugging in console
-  window._dump = { state, canvas, ctx, savePersist, loadPersist, spawnWave, placeSelectedBuild };
+  window._dump = { state, canvas, ctx, savePersist, loadPersist, spawnWave, placeSelectedBuild, sellSelected };
 
 })();
 </script>
