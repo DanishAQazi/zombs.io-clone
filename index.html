@@ -1,0 +1,1014 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Zombs Offline — Single Clean File</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+:root{
+  --bg:#07121a; --panel:rgba(255,255,255,0.03); --accent:#7ee; --good:#4fe08a; --warn:#ffd36b; --bad:#ff7b7b;
+}
+html,body{height:100%;margin:0;background:var(--bg);color:#eaf3f6;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
+canvas{display:block;position:absolute;left:0;top:0}
+#uiTop{position:absolute;left:12px;top:8px;right:12px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;z-index:20}
+.panel{background:var(--panel);padding:8px 10px;border-radius:8px;font-size:13px;pointer-events:auto;display:flex;gap:12px;align-items:center}
+#shop{position:absolute;left:12px;top:86px;background:rgba(0,0,0,0.28);padding:10px;border-radius:8px;width:340px;pointer-events:auto;z-index:20}
+.shop-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.shop-btn{display:flex;gap:8px;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.02);cursor:pointer;border:1px solid rgba(255,255,255,0.02)}
+.shop-btn:hover{background:rgba(255,255,255,0.035)}
+.shop-emoji{font-size:20px;width:36px;text-align:center}
+.res-pill{background:rgba(255,255,255,0.03);padding:6px 8px;border-radius:8px;font-weight:700}
+#centerControls{position:absolute;left:364px;top:86px;background:rgba(0,0,0,0.18);padding:8px;border-radius:8px;pointer-events:auto;z-index:20}
+#nightShade{position:absolute;inset:0;pointer-events:none;z-index:10}
+.hudMsg{position:absolute;left:50%;transform:translateX(-50%);top:56px;background:rgba(0,0,0,0.36);padding:8px 14px;border-radius:8px;font-weight:700;pointer-events:none;z-index:30}
+.player-hp{position:absolute;left:50%;transform:translateX(-50%);bottom:18px;background:rgba(0,0,0,0.2);padding:8px;border-radius:8px;width:380px;pointer-events:none;z-index:20}
+.hpBar{height:12px;border-radius:6px;background:rgba(255,255,255,0.06);overflow:hidden}
+.hpFill{height:12px;background:linear-gradient(90deg,#ff6b6b,#ffcf6b);width:100%}
+.small{font-size:12px;color:#9ab;margin-left:8px}
+.centerNote{font-size:13px;color:#bcd;margin-top:6px}
+.btn{background:#123; border-radius:6px; padding:6px 8px; color:#bfe; border:0; cursor:pointer}
+.tooltip { position: absolute; background: rgba(0,0,0,0.8); padding:6px 8px; border-radius:6px; font-size:12px; color:#fff; pointer-events:none; z-index:40; display:none; }
+</style>
+</head>
+<body>
+<div id="uiTop">
+  <div id="leftPanel" class="panel">
+    <div><strong>Wave:</strong> <span id="wave">0</span></div>
+    <div><strong>Lives:</strong> <span id="lives">10</span></div>
+    <div><strong>Time:</strong> <span id="dayNight">Day</span></div>
+    <div class="small" id="dayTimer">(—)</div>
+  </div>
+
+  <div id="rightPanel" class="panel">
+    <div class="res-pill">🪵 <span id="goldWood">0</span></div>
+    <div class="res-pill">🪨 <span id="goldStone">0</span></div>
+    <div class="res-pill">💰 <span id="goldCount">0</span></div>
+  </div>
+</div>
+
+<div id="hudMsg" class="hudMsg" style="display:none"></div>
+
+<div id="shop" aria-label="Build menu">
+  <div style="font-weight:800;margin-bottom:8px">BUILD</div>
+
+  <!-- Stash (free, required) -->
+  <div class="shop-row">
+    <div class="shop-btn" data-build="stash" title="Free — required to start waves">
+      <div class="shop-emoji">🏆</div>
+      <div><strong>Gold Stash</strong><div class="small">Free — required</div></div>
+      <div style="margin-left:auto;font-weight:700">Free</div>
+    </div>
+  </div>
+
+  <!-- Mine -->
+  <div class="shop-row">
+    <div class="shop-btn" data-build="mine" title="Mine cost: 20 wood, 10 stone (max 8)">
+      <div class="shop-emoji">⛏️</div>
+      <div><strong>Gold Mine</strong><div class="small">Produces gold over time (place ASAP)</div></div>
+      <div style="margin-left:auto;font-weight:700">20🪵 10🪨</div>
+    </div>
+  </div>
+
+  <div style="height:8px"></div>
+  <div style="font-weight:700;margin-top:6px">TOWERS</div>
+
+  <div class="shop-row">
+    <div class="shop-btn" data-build="fire" title="Fire Tower: 30 wood, 15 stone">
+      <div class="shop-emoji">🔥</div>
+      <div><strong>Fire Tower</strong><div class="small">Average damage + burn</div></div>
+      <div style="margin-left:auto;font-weight:700">30🪵 15🪨</div>
+    </div>
+  </div>
+
+  <div class="shop-row">
+    <div class="shop-btn" data-build="cold" title="Cold Tower: 25 wood, 20 stone">
+      <div class="shop-emoji">❄️</div>
+      <div><strong>Cold Tower</strong><div class="small">Strong slow, low dmg</div></div>
+      <div style="margin-left:auto;font-weight:700">25🪵 20🪨</div>
+    </div>
+  </div>
+
+  <div class="shop-row">
+    <div class="shop-btn" data-build="poison" title="Poison Tower: 40 wood, 25 stone">
+      <div class="shop-emoji">☠️</div>
+      <div><strong>Poison Tower</strong><div class="small">Low hit, poison DOT</div></div>
+      <div style="margin-left:auto;font-weight:700">40🪵 25🪨</div>
+    </div>
+  </div>
+
+  <div style="margin-top:8px;font-weight:700">TOOLS</div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button class="btn" id="forceNightBtn">Force Night</button>
+    <button class="btn" id="wipeBaseBtn">Wipe Base</button>
+    <button class="btn" id="sellBtn">Sell Selected (S)</button>
+  </div>
+
+  <div class="centerNote" style="margin-top:8px">Click an item, then click the map to place. Double-click map quick-places. Keys: 1-5 select.</div>
+</div>
+
+<div id="centerControls" class="panel" style="left:364px;top:86px;position:absolute">
+  <div style="font-weight:700">Controls</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div class="small">WASD move • Left-click / Space = Use tool</div>
+  </div>
+  <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+    <button class="btn" id="toolHand">Hand</button>
+    <button class="btn" id="toolAxe">Axe</button>
+  </div>
+</div>
+
+<div id="nightShade"></div>
+<div class="player-hp"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><div>Player HP</div><div id="hpText">100/100</div></div><div class="hpBar"><div id="hpFill" class="hpFill" style="width:100%"></div></div></div>
+
+<div id="tooltip" class="tooltip"></div>
+
+<!-- Action panel shows when you click a building -->
+<div id="actionPanel" class="panel" style="display:none; position:absolute; z-index:60; left:20px; top:120px; flex-direction:column; gap:8px;">
+  <div id="actionTitle" style="font-weight:800">Selected</div>
+  <div id="actionInfo" class="small">--</div>
+  <div id="upgradePreview" class="upgrade-preview" style="display:none"></div>
+  <div style="display:flex;gap:8px">
+    <button class="btn" id="actionSellBtn">Sell</button>
+    <button class="btn" id="actionUpgradeBtn">Upgrade</button>
+    <button class="btn" id="actionCloseBtn">Close</button>
+  </div>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+/*
+  Single-file cleaned version.
+  I kept every feature you had and removed duplicates/obvious crash sources.
+  If anything still fails, paste the first console error here.
+*/
+
+(() => {
+  // --- Setup & canvas ---
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  function resize(){
+    const w = window.innerWidth, h = window.innerHeight;
+    // preserve previous logic: keep canvas.width/height as CSS pixels so rest of code remains unchanged
+    canvas.width = Math.max(320, Math.floor(w));
+    canvas.height = Math.max(240, Math.floor(h));
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // --- Constants & HUD elements ---
+  const MAP_W = 2000, MAP_H = 1400;
+  const HUD_wave = document.getElementById('wave');
+  const HUD_lives = document.getElementById('lives');
+  const HUD_gold = document.getElementById('goldCount');
+  const HUD_wood = document.getElementById('goldWood');
+  const HUD_stone = document.getElementById('goldStone');
+  const HUD_hpText = document.getElementById('hpText');
+  const HUD_hpFill = document.getElementById('hpFill');
+  const HUD_dayNight = document.getElementById('dayNight');
+  const HUD_dayTimer = document.getElementById('dayTimer');
+  const HUD_msg = document.getElementById('hudMsg');
+  const tooltip = document.getElementById('tooltip');
+  const nightShade = document.getElementById('nightShade');
+
+  // --- Input ---
+  const keys = {}, mouse = { x:0, y:0, down:false };
+  document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+  document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+  canvas.addEventListener('mousemove', e => {
+    const r = canvas.getBoundingClientRect();
+    mouse.x = (e.clientX - r.left) * (canvas.width / r.width);
+    mouse.y = (e.clientY - r.top) * (canvas.height / r.height);
+    tooltipFollow();
+  });
+  canvas.addEventListener('mousedown', e => { if(e.button===0) mouse.down = true; });
+  canvas.addEventListener('mouseup', e => { if(e.button===0) mouse.down = false; });
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+  // --- Utility ---
+  const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+  function roundRect(x,y,w,h,r,fill){
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+    if(fill) ctx.fill(); else ctx.stroke();
+  }
+
+  // --- Persistence ---
+  const SAVE_KEY = 'zombs_offline_wired_v1';
+  
+function savePersist(state){
+  try {
+    const saveObj = {
+      gold: Math.floor(state.gold),
+      wood: Math.floor(state.wood),
+      stone: Math.floor(state.stone),
+      stashLevel: state.stash ? (state.stash.level || 0) : 0,
+      towers: state.towers ? state.towers.map(t => ({ x:t.x, y:t.y, kind:t.kind, level:t.level || 1, dmg:t.dmg, range:t.range, rate:t.rate })) : [],
+      mines: state.mines ? state.mines.map(m => ({ x:m.x, y:m.y, level:m.level || 1, accum:m.accum })) : []
+    };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(saveObj));
+  } catch(e){}
+}
+function loadPersist(state){
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw){
+      const o = JSON.parse(raw);
+      if(typeof o.gold==='number') state.gold = o.gold;
+      if(typeof o.wood==='number') state.wood = o.wood;
+      if(typeof o.stone==='number') state.stone = o.stone;
+      // stash level will be applied if stash exists on load
+      if(typeof o.stashLevel === 'number' && state.stash){ state.stash.level = o.stashLevel; }
+      if(Array.isArray(o.towers) && o.towers.length){
+        state.towers = o.towers.map(t => { const tw = new Tower(t.x,t.y,t.kind); tw.level = t.level || 1; tw.dmg = t.dmg || tw.dmg; tw.range = t.range || tw.range; tw.rate = t.rate || tw.rate; return tw; });
+      }
+      if(Array.isArray(o.mines) && o.mines.length){
+        state.mines = o.mines.map(m => { const mi = new Mine(m.x,m.y); mi.level = m.level || 1; mi.accum = m.accum || 0; return mi; });
+      }
+    }
+  } catch(e){}
+}
+  // --- HUD helpers ---
+  let msgTimer = 0;
+  function showHUDMessage(text, ms=2000){
+    HUD_msg.style.display = 'block'; HUD_msg.textContent = text; msgTimer = ms;
+  }
+  function updateHUDMessageTimer(dt){
+    if(msgTimer > 0){ msgTimer -= dt*1000; if(msgTimer <= 0) HUD_msg.style.display = 'none'; }
+  }
+  function showTooltip(text){ tooltip.style.display = 'block'; tooltip.textContent = text; tooltipFollow(); }
+  function hideTooltip(){ tooltip.style.display = 'none'; }
+  function tooltipFollow(){
+    if(tooltip.style.display === 'none') return;
+    const x = Math.max(10, mouse.x + 12);
+    const y = Math.max(10, mouse.y + 12);
+    tooltip.style.left = (x) + 'px';
+    tooltip.style.top = (y) + 'px';
+  }
+
+  // Bind shop buttons
+  function bindBuildButtons(selectBuild){
+    const buildButtons = document.querySelectorAll('.shop-btn');
+    buildButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.build;
+        if(kind) selectBuild(kind);
+      });
+      btn.addEventListener('mouseenter', (e) => {
+        const t = btn.getAttribute('title') || btn.dataset.build || '';
+        showTooltip(t || ' ');
+      });
+      btn.addEventListener('mouseleave', hideTooltip);
+    });
+  }
+
+  // --- World objects (ResourceNode, Player, Tower, Mine, Enemy) ---
+  class ResourceNode {
+    constructor(x,y,type){ this.x=x; this.y=y; this.type=type; this.size=(type==='tree'?20:16); this.shake=0; }
+    harvest(state){
+      const amt = 1;
+      if(this.type==='tree') state.wood += amt; else state.stone += amt;
+      this.shake = 0.8; savePersist(state); updateHUD();
+      showHUDMessage(`+${amt} ${this.type==='tree'?'wood':'stone'}`);
+    }
+    update(dt){ if(this.shake>0) this.shake = Math.max(0, this.shake - dt); }
+    draw(offX,offY){
+      let sx = this.x - offX, sy = this.y - offY;
+      if(this.shake>0){ sx += Math.sin(this.shake*30)*4; sy += Math.cos(this.shake*20)*2; }
+      if(sx < -40 || sx > canvas.width+40 || sy < -40 || sy > canvas.height+40) return;
+      ctx.save(); ctx.translate(sx, sy);
+      if(this.type==='tree'){
+        ctx.fillStyle='#6b3f1f'; ctx.fillRect(-6,6,12,12); ctx.beginPath(); ctx.fillStyle='#2aa04a'; ctx.arc(0,-6,18,0,Math.PI*2); ctx.fill();
+      } else {
+        ctx.fillStyle='#9ba0a5'; ctx.beginPath(); ctx.moveTo(-12,6); ctx.lineTo(-8,-8); ctx.lineTo(6,-10); ctx.lineTo(12,6); ctx.closePath(); ctx.fill();
+        ctx.fillStyle='#7e8488'; ctx.fillRect(-6,4,12,8);
+      }
+      ctx.restore();
+    }
+  }
+
+  class Player {
+    constructor(x,y){ this.x=x; this.y=y; this.size=14; this.speed=200; this.hp=100; this.swing=0; }
+    update(dt){
+      let dx=0,dy=0;
+      if(keys['w']) dy-=1; if(keys['s']) dy+=1; if(keys['a']) dx-=1; if(keys['d']) dx+=1;
+      if(dx||dy){ const L=Math.hypot(dx,dy)||1; dx/=L; dy/=L; this.x += dx*this.speed*dt; this.y += dy*this.speed*dt; }
+      // collisions with blockers
+      const blockers = [...state.resourceNodes, ...state.towers, ...state.mines, ...(state.stash? [state.stash] : [])];
+      for(const b of blockers){
+        const bx=b.x, by=b.y, br=(b.size||18)+6;
+        const d = Math.hypot(this.x - bx, this.y - by);
+        if(d < br + this.size){
+          const overlap = br + this.size - d;
+          if(d>0){ this.x += (this.x-bx)/d * overlap; this.y += (this.y-by)/d * overlap; } else { this.x += overlap; this.y += overlap; }
+        }
+      }
+      // clamp to map bounds
+      this.x = clamp(this.x, this.size+6, MAP_W - (this.size+6));
+      this.y = clamp(this.y, this.size+6, MAP_H - (this.size+6));
+      if(this.swing>0) this.swing = Math.max(0, this.swing - dt);
+    }
+    draw(offX,offY){
+      const sx = this.x - offX, sy = this.y - offY; if(sx < -50 || sx > canvas.width+50 || sy < -50 || sy > canvas.height+50) return;
+      ctx.save(); ctx.translate(sx, sy); ctx.fillStyle='#dfe'; roundRect(-12,-10,24,20,5,true);
+      if(this.swing > 0){ ctx.save(); const a = (1 - this.swing/0.22) * Math.PI*0.75 - Math.PI*0.25; ctx.rotate(a); ctx.fillStyle='rgba(255,255,255,0.15)'; ctx.beginPath(); ctx.moveTo(12,0); ctx.arc(0,0,34, a-0.4, a+0.4); ctx.closePath(); ctx.fill(); ctx.restore(); }
+      ctx.restore();
+    }
+  }
+
+  class Tower {
+    constructor(x,y,kind){ this.x=x; this.y=y; this.kind=kind; this.level=1; this.cool=0; this.size=14;
+      if(kind==='fire'){ this.range=170; this.rate=0.9; this.dmg=28; this.bsp=420; this.burn=6; }
+      if(kind==='cold'){ this.range=150; this.rate=1.1; this.dmg=12; this.bsp=380; this.slow=0.45; }
+      if(kind==='poison'){ this.range=160; this.rate=1.0; this.dmg=10; this.bsp=360; this.poison=4; }
+    }
+    update(dt){
+      this.cool -= dt;
+      if(this.cool <= 0){
+        let nearest=null, nd=9999;
+        for(const e of state.enemies){ const d = Math.hypot(e.x - this.x, e.y - this.y); if(d < nd && d <= this.range){ nd=d; nearest=e; } }
+        if(nearest){
+          const evx = nearest.vx||0, evy = nearest.vy||0;
+          let relx = nearest.x - this.x, rely = nearest.y - this.y;
+          let t = Math.hypot(relx,rely)/(this.bsp||420) || 0.5;
+          t = Math.max(0, Math.hypot(relx + evx*t, rely + evy*t)/(this.bsp||420));
+          const aimX = nearest.x + evx*t, aimY = nearest.y + evy*t;
+          const ang = Math.atan2(aimY - this.y, aimX - this.x);
+          const speed = this.bsp;
+          state.bullets.push({ x:this.x + Math.cos(ang)*14, y:this.y + Math.sin(ang)*14, vx:Math.cos(ang)*speed, vy:Math.sin(ang)*speed, life:2, dmg:this.dmg, aoe:(this.kind==='fire'?36:0), towerKind:this.kind });
+          this.cool = this.rate / (1 + 0.1*(this.level-1));
+        }
+      }
+    }
+    draw(offX,offY,selected){
+      const sx = this.x - offX, sy = this.y - offY; if(sx < -50 || sx > canvas.width+50 || sy < -50 || sy > canvas.height+50) return;
+      ctx.save(); ctx.translate(sx, sy); if(this.kind==='fire') ctx.fillStyle='#ff9a6b'; else if(this.kind==='cold') ctx.fillStyle='#9ad8ff'; else ctx.fillStyle='#9ef08a';
+      roundRect(-12,-12,24,24,6,true);
+      if(selected){ ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=3; ctx.strokeRect(-16,-16,32,32); ctx.lineWidth=1; ctx.strokeStyle='#000'; }
+      ctx.restore();
+    }
+  }
+
+  class Mine {
+    constructor(x,y){ this.x=x; this.y=y; this.size=16; this.goldPerSec=1; this.accum=0; this.level=1; } // goldPerSec=1
+    update(dt){ this.accum += this.goldPerSec * dt; }
+    draw(offX,offY){ const sx = this.x - offX, sy = this.y - offY; if(sx < -50 || sx > canvas.width+50 || sy < -50 || sy > canvas.height+50) return; ctx.save(); ctx.translate(sx, sy); ctx.fillStyle='#ffd67a'; roundRect(-14,-10,28,20,6,true); ctx.restore(); }
+  }
+
+  class Enemy {
+    constructor(x,y,type){ this.x=x; this.y=y; this.type=type; this.size=12;
+      if(type==='walker'){ this.maxSpeed=68; this.hp=56; } else if(type==='runner'){ this.maxSpeed=150; this.hp=38; } else { this.maxSpeed=36; this.hp=220; }
+      this.vx=0; this.vy=0; this.accel=380; this.effects={burn:0,slow:0,poison:0}; this.slowFactor=0;
+    }
+    applyEffect(kind,value,dur){
+      if(kind==='burn') this.effects.burn = Math.max(this.effects.burn, dur);
+      if(kind==='slow'){ this.effects.slow = Math.max(this.effects.slow, dur); this.slowFactor = Math.min(0.9, (this.slowFactor||0) + value); }
+      if(kind==='poison') this.effects.poison = Math.max(this.effects.poison, dur);
+    }
+    update(dt){
+      if(this.effects.burn > 0){ this.hp -= 4*dt; this.effects.burn = Math.max(0, this.effects.burn - dt); }
+      if(this.effects.poison > 0){ this.hp -= 1.2*dt; this.effects.poison = Math.max(0, this.effects.poison - dt); }
+      let target = {x:MAP_W/2, y:MAP_H/2}; let bd = Math.hypot(target.x - this.x, target.y - this.y);
+      for(const m of state.mines){ const d = Math.hypot(m.x - this.x, m.y - this.y); if(d < bd){ bd=d; target={x:m.x,y:m.y}; } }
+      for(const t of state.towers){ const d = Math.hypot(t.x - this.x, t.y - this.y); if(d < bd){ bd=d; target={x:t.x,y:t.y}; } }
+      const pd = Math.hypot(state.player.x - this.x, state.player.y - this.y);
+      if(pd < 120){ bd = pd; target = {x:state.player.x, y:state.player.y}; }
+      const dx = target.x - this.x, dy = target.y - this.y, len = Math.hypot(dx,dy)||1;
+      let speed = this.maxSpeed;
+      if(this.effects.slow && this.effects.slow > 0){ speed *= (1 - (this.slowFactor || 0)); this.effects.slow = Math.max(0, this.effects.slow - dt); }
+      const desiredVX = (dx/len) * speed, desiredVY = (dy/len) * speed;
+      this.vx += clamp(desiredVX - this.vx, -this.accel*dt, this.accel*dt);
+      this.vy += clamp(desiredVY - this.vy, -this.accel*dt, this.accel*dt);
+      this.x += this.vx * dt; this.y += this.vy * dt;
+      for(const o of state.enemies){ if(o===this) continue; const dd = Math.hypot(this.x-o.x,this.y-o.y); if(dd>0 && dd < this.size+o.size+6){ const push=(this.size+o.size+6 - dd)*0.18; this.x += (this.x-o.x)/dd * push; this.y += (this.y-o.y)/dd * push; } }
+      if(Math.hypot(this.x - MAP_W/2, this.y - MAP_H/2) < 28){
+        if(state.stash){
+          state.stash.hp -= 8 * dt; if(state.stash.hp <= 0){ state.stash.hp = 0; }
+        }
+        state.lives = Math.max(0, state.lives - 1);
+        this.hp = 0;
+        state.player.hp -= 20;
+        updateHUD();
+        if(state.player.hp <= 0){
+          state.player.hp = 100; state.player.x = MAP_W/2 + 48; state.player.y = MAP_H/2 + 8; showHUDMessage('You died — respawned',1500);
+        }
+      }
+    }
+    draw(offX,offY){ const sx = this.x - offX, sy = this.y - offY; if(sx < -50 || sx > canvas.width+50 || sy < -50 || sy > canvas.height+50) return; ctx.save(); ctx.translate(sx, sy); ctx.fillStyle = (this.type==='runner'? '#ff8c6b': this.type==='tank'? '#aa6' : '#9a9'); ctx.beginPath(); ctx.arc(0,0,this.size,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+  }
+
+  // --- State & costs ---
+  const state = {
+    player:null, cam:{x:0,y:0},
+    resourceNodes:[], towers:[], mines:[], stash:null,
+    enemies:[], bullets:[],
+    gold:0, wood:120, stone:80,
+    timeOfDay:0, cycleDay:60, cycleNight:40, inNight:false, wave:0, lives:10,
+    selectedBuild:null, selectedObject:null,
+    handCooldown:0, handMax:0.5, handRange:42,
+    selectedTool: 'hand'   // <-- add this line
+  };
+
+  const COSTS = {
+    mine: { wood:20, stone:10 },
+    fire: { wood:30, stone:15 },
+    cold: { wood:25, stone:20 },
+    poison: { wood:40, stone:25 }
+  };
+
+  // --- Key gameplay functions (no duplicates) ---
+
+  function updateBullets(dt){
+    for(let i=state.bullets.length-1;i>=0;i--){
+      const b = state.bullets[i];
+      b.x += b.vx * dt; b.y += b.vy * dt; b.life -= dt;
+      if(b.life <= 0 || b.x < -200 || b.y < -200 || b.x > MAP_W + 200 || b.y > MAP_H + 200){ state.bullets.splice(i,1); continue; }
+      for(let j=state.enemies.length-1;j>=0;j--){
+        const e = state.enemies[j];
+        const d = Math.hypot(b.x - e.x, b.y - e.y);
+        if(d < e.size + 4){
+          e.hp -= b.dmg;
+          if(b.towerKind === 'fire'){ e.applyEffect('burn',6,4); }
+          else if(b.towerKind === 'cold'){ e.applyEffect('slow',0.45,2.8); }
+          else if(b.towerKind === 'poison'){ e.applyEffect('poison',3,6); }
+          if(b.aoe){
+            for(const o of state.enemies){ const d2 = Math.hypot(b.x - o.x, b.y - o.y); if(d2 < b.aoe) o.hp -= Math.round(b.dmg * 0.6); }
+          }
+          state.bullets.splice(i,1);
+          break;
+        }
+      }
+    }
+  }
+
+  function spawnWave(count){
+    for(let i=0;i<count;i++){
+      const side = Math.floor(Math.random()*4); let x=0,y=0;
+      if(side===0){ x = Math.random()*MAP_W; y = -40; } else if(side===1){ x = Math.random()*MAP_W; y = MAP_H + 40; } else if(side===2){ x = -40; y = Math.random()*MAP_H; } else { x = MAP_W + 40; y = Math.random()*MAP_H; }
+      const r = Math.random(); let type = 'walker';
+      if(r < Math.min(0.06 + state.wave*0.01, 0.22)) type = 'tank';
+      else if(r > 0.9 && state.wave > 3) type = 'runner';
+      state.enemies.push(new Enemy(x,y,type));
+    }
+  }
+
+  function updateDayNight(dt){
+    state.timeOfDay += dt;
+    const cycle = state.cycleDay + state.cycleNight;
+    if(state.timeOfDay >= cycle) state.timeOfDay -= cycle;
+    state.inNight = state.timeOfDay >= state.cycleDay;
+    if(state.inNight){ HUD_dayNight.textContent = 'Night'; HUD_dayTimer.textContent = `Night ${Math.ceil(state.cycleDay+state.cycleNight - state.timeOfDay)}s`; }
+    else { HUD_dayNight.textContent = 'Day'; HUD_dayTimer.textContent = `Day ${Math.ceil(state.cycleDay - state.timeOfDay)}s`; }
+    if(state.inNight && !state._nightStarted && state.stash){
+      state._nightStarted = true; state.wave++; HUD_wave.textContent = state.wave;
+      const count = 5 + Math.floor(state.wave * 1.8);
+      spawnWave(count); showHUDMessage(`Night ${state.wave} — ${count} zombies incoming`, 3000);
+    } else if(!state.inNight) state._nightStarted = false;
+    if(state.inNight) nightShade.style.background = 'linear-gradient(rgba(0,0,0,0.18), rgba(0,0,0,0.45))'; else nightShade.style.background = 'transparent';
+  }
+
+  function playerHandAction(){
+    if(state.handCooldown > 0){ showHUDMessage('Hand cooling down', 900); return; }
+    state.handCooldown = state.handMax; state.player.swing = 0.22;
+// harvest nodes near player — only if tool is axe
+if(state.selectedTool === 'axe'){
+  for(const r of state.resourceNodes){
+    const d = Math.hypot(r.x - state.player.x, r.y - state.player.y);
+    if(d < state.handRange + r.size){ r.harvest(state); updateHUD(); return; }
+  }
+}
+    // mines withdraw
+    for(const m of state.mines){
+      const d = Math.hypot(m.x - state.player.x, m.y - state.player.y);
+      if(d < state.handRange + m.size){
+        const amt = Math.floor(m.accum);
+        if(amt > 0){ state.gold += amt; m.accum = 0; savePersist(state); updateHUD(); showHUDMessage(`+${amt} gold`); return; }
+      }
+    }
+    // stash deposit
+    if(state.stash){
+      const d = Math.hypot(state.stash.x - state.player.x, state.stash.y - state.player.y);
+      if(d < state.handRange + (state.stash.size||18)){
+        const dep = Math.floor(state.gold * 0.5);
+        if(dep > 0){ state.gold -= dep; state.stash.stored = (state.stash.stored||0) + dep; savePersist(state); updateHUD(); showHUDMessage(`Deposited ${dep} gold`); return; }
+      }
+    }
+    // hit enemies
+    let hit=null, hd=9999;
+    for(const e of state.enemies){
+      const d = Math.hypot(e.x - state.player.x, e.y - state.player.y);
+      if(d < state.handRange + e.size && d < hd){ hd=d; hit=e; }
+    }
+    if(hit){ const dmg = 12; hit.hp -= dmg; const dx=(hit.x - state.player.x)||1, dy=(hit.y - state.player.y)||0, ln=Math.hypot(dx,dy)||1; hit.x += (dx/ln)*8; hit.y += (dy/ln)*8; showHUDMessage(`Hit enemy -${dmg}`); return; }
+    showHUDMessage('Nothing to hit or harvest', 900);
+  }
+
+  function snapToGrid(wx,wy){
+    const grid = 20;
+    const snappedX = Math.round(wx / grid) * grid;
+    const snappedY = Math.round(wy / grid) * grid;
+    return { x: snappedX, y: snappedY };
+  }
+
+  function canPlace(x,y, radius=28){
+    if(Math.hypot(x - MAP_W/2, y - MAP_H/2) < 80) return false;
+    for(const r of state.resourceNodes) if(Math.hypot(r.x - x, r.y - y) < (r.size + radius)) return false;
+    for(const t of state.towers) if(Math.hypot(t.x - x, t.y - y) < (t.size + radius)) return false;
+    for(const m of state.mines) if(Math.hypot(m.x - x, m.y - y) < (m.size + radius)) return false;
+    if(state.stash && Math.hypot(state.stash.x - x, state.stash.y - y) < (22 + radius)) return false;
+    if(x < 40 || y < 40 || x > MAP_W - 40 || y > MAP_H - 40) return false;
+    return true;
+  }
+
+  function placeSelectedBuild(wx,wy){
+    const sb = state.selectedBuild;
+    if(!sb){ showHUDMessage('No building selected', 900); return; }
+    const snapped = snapToGrid(wx,wy);
+    wx = snapped.x; wy = snapped.y;
+    if(sb === 'stash'){
+      if(state.stash){ showHUDMessage('Stash already exists', 1200); return; }
+      if(!canPlace(wx,wy,36)){ showHUDMessage('Cannot place stash there', 1200); return; }
+      state.stash = { x:wx, y:wy, size:20, hp:450, stored:0, level:0 };
+      state.selectedBuild = null; savePersist(state); showHUDMessage('Gold Stash placed', 1200); return;
+    }
+    if(!state.stash){ showHUDMessage('Build a Gold Stash first', 1200); return; }
+    if(sb === 'mine'){
+      if(state.mines.length >= 8){ showHUDMessage('Max 8 mines', 1200); return; }
+      const cost = COSTS.mine;
+      if(state.wood < cost.wood || state.stone < cost.stone){ showHUDMessage('Not enough resources', 1200); return; }
+      if(!canPlace(wx,wy,28)){ showHUDMessage('Cannot place mine there', 1200); return; }
+      state.wood -= cost.wood; state.stone -= cost.stone;
+      state.mines.push(new Mine(wx,wy)); state.selectedBuild=null; savePersist(state); updateHUD(); showHUDMessage('Mine placed', 1200); return;
+    }
+    if(sb === 'fire' || sb === 'cold' || sb === 'poison'){
+      const cost = COSTS[sb];
+      if(state.wood < cost.wood || state.stone < cost.stone){ showHUDMessage('Not enough resources', 1200); return; }
+      if(!canPlace(wx,wy,28)){ showHUDMessage('Cannot place tower there', 1200); return; }
+      state.wood -= cost.wood; state.stone -= cost.stone;
+      state.towers.push(new Tower(wx,wy,sb)); state.selectedBuild=null; savePersist(state); updateHUD(); showHUDMessage(`${sb.charAt(0).toUpperCase()+sb.slice(1)} Tower placed`, 1200); return;
+    }
+  }
+
+// Show action panel for selected object (positions near screen coords)
+
+
+// --- Upgrade helper functions (added) ---
+function computeUpgradeCostForTower(t){
+  const base = { fire:{w:30,s:15}, cold:{w:25,s:20}, poison:{w:40,s:25} }[t.kind] || {w:30,s:15};
+  const scaleW = 0.7, scaleS = 0.6;
+  const costW = Math.ceil(base.w * (1 + (t.level||1) * scaleW));
+  const costS = Math.ceil(base.s * (1 + (t.level||1) * scaleS));
+  const costG = Math.ceil(150 * (t.level || 1));
+  return { wood: costW, stone: costS, gold: costG };
+}
+function computeUpgradeCostForMine(m){
+  const lvl = m.level || 1;
+  const costGold = Math.ceil(120 * lvl);
+  const costWood = Math.ceil(8  * lvl);
+  const costStone = Math.ceil(6 * lvl);
+  return { gold: costGold, wood: costWood, stone: costStone };
+}
+function computeUpgradeCostForStash(stash){
+  const lvl = stash.level || 0;
+  const costGold = 1000 * (lvl + 1);
+  return { gold: costGold };
+}
+function simulateUpgradeStats(t){
+  const newDmg = Math.round((t.dmg || 10) * 1.25);
+  const newRange = Math.round((t.range || 150) * 1.10);
+  const newRate = Number(Math.max(0.18, (t.rate || 1.0) * 0.92).toFixed(2));
+  return { dmg: newDmg, range: newRange, rate: newRate };
+}
+function formatStatLine(label, oldVal, newVal){
+  const delta = (typeof oldVal === 'number') ? (newVal - oldVal) : '';
+  const deltaText = (delta === '' ? '' : ` <span class="delta">(${delta>0?'+':''}${delta})</span>`);
+  return `<div><span class="old">${label}: ${oldVal}</span><span class="new"> → ${newVal}</span>${deltaText}</div>`;
+}
+// --- end helpers ---
+
+
+function showActionPanel(title, obj){
+  actionTitle.textContent = title;
+  let lines = [];
+  upgradePreview.innerHTML = '';
+  if(title === 'Gold Stash'){
+    lines.push(`HP: ${Math.round(obj.hp||0)}`);
+    lines.push(`Stored: ${obj.stored||0} gold`);
+    const upCost = computeUpgradeCostForStash(obj);
+    lines.push(`Upgrade cost → ${upCost.gold}💰`);
+    actionUpgradeBtn.style.display = 'inline-block';
+    upgradePreview.style.display = 'block';
+    upgradePreview.innerHTML = `<div class="old">Level: ${obj.level||0}</div><div class="new"> → ${ (obj.level||0) + 1 }</div>`;
+    const stashMax = 5;
+    if((obj.level||0) >= stashMax) { actionUpgradeBtn.disabled = true; actionInfo.textContent = 'Stash at max level'; }
+    else actionUpgradeBtn.disabled = !(state.gold >= upCost.gold);
+  }
+  else if(title === 'Mine'){
+    lines.push(`Accum: ${Math.floor(obj.accum||0)} gold`);
+    const upCost = computeUpgradeCostForMine(obj);
+    if(!state.stash || (state.stash.level||0) < 1){
+      lines.push('Upgrade locked — upgrade Gold Stash first');
+      actionUpgradeBtn.style.display = 'none';
+      upgradePreview.style.display = 'none';
+    } else {
+      lines.push(`Upgrade cost → ${upCost.gold}💰 ${upCost.wood}🪵 ${upCost.stone}🪨`);
+      const simLvl = (obj.level||1) + 1;
+      upgradePreview.style.display = 'block';
+      upgradePreview.innerHTML = `<div class="old">Level: ${obj.level||1}</div><div class="new"> → ${simLvl}</div>`;
+      actionUpgradeBtn.style.display = 'inline-block';
+      actionUpgradeBtn.disabled = ((obj.level||1) >= 5) || !(state.gold >= upCost.gold && state.wood >= upCost.wood && state.stone >= upCost.stone);
+      if((obj.level||1) >= 5) lines.push('Mine is MAX level');
+    }
+  }
+  else if(title === 'Tower'){
+    lines.push(`Kind: ${obj.kind}  Level: ${obj.level||1}`);
+    lines.push(`Dmg: ${Math.round(obj.dmg||0)}  Rate: ${Number((obj.rate||1).toFixed(2))}s  Range: ${Math.round(obj.range||0)}`);
+    const upCost = computeUpgradeCostForTower(obj);
+    if(!state.stash || (state.stash.level||0) < 1){
+      lines.push('Upgrade locked — upgrade Gold Stash first');
+      actionUpgradeBtn.style.display = 'none';
+      upgradePreview.style.display = 'none';
+    } else {
+      lines.push(`Upgrade cost → ${upCost.gold}💰 ${upCost.wood}🪵 ${upCost.stone}🪨`);
+      const sim = simulateUpgradeStats(obj);
+      upgradePreview.style.display = 'block';
+      upgradePreview.innerHTML =
+        formatStatLine('Damage', Math.round(obj.dmg||0), sim.dmg) +
+        formatStatLine('Rate (s)', Number((obj.rate||1).toFixed(2)), sim.rate) +
+        formatStatLine('Range', Math.round(obj.range||0), sim.range);
+      actionUpgradeBtn.style.display = 'inline-block';
+      actionUpgradeBtn.disabled = ((obj.level||1) >= 5) || !(state.gold >= upCost.gold && state.wood >= upCost.wood && state.stone >= upCost.stone);
+      if((obj.level||1) >= 5) lines.push('Tower is MAX level');
+    }
+  }
+  actionInfo.textContent = lines.join(' • ');
+  const sx = Math.round(obj.x - state.cam.x);
+  const sy = Math.round(obj.y - state.cam.y);
+  const panelX = clamp(sx + 16, 8, canvas.width - 260);
+  const panelY = clamp(sy - 10, 8, canvas.height - 140);
+  actionPanel.style.left = panelX + 'px';
+  actionPanel.style.top  = panelY + 'px';
+  actionPanel.style.display = 'flex';
+}
+
+// Sell button
+actionSellBtn.addEventListener('click', () => {
+  if(!state.selectedObject) { showHUDMessage('No object to sell',900); actionPanel.style.display='none'; return; }
+  sellSelected();
+  actionPanel.style.display = 'none';
+  updateHUD();
+});
+
+// Close button
+actionCloseBtn.addEventListener('click', () => {
+  actionPanel.style.display = 'none';
+});
+
+// Upgrade button wiring
+if(typeof actionUpgradeBtn !== 'undefined' && actionUpgradeBtn !== null){ actionUpgradeBtn.addEventListener('click', upgradeSelected); }
+
+
+// --- Upgrade selected handler (handles stash, mines, towers) ---
+function upgradeSelected(){
+  if(!state.selectedObject){ showHUDMessage('No object selected',900); return; }
+
+  if(state.selectedObject.type === 'stash'){
+    const s = state.selectedObject.obj;
+    const upCost = computeUpgradeCostForStash(s);
+    const stashMax = 5;
+    if((s.level||0) >= stashMax){ showHUDMessage('Stash already max level',900); return; }
+    if(state.gold < upCost.gold){ showHUDMessage('Not enough gold for stash upgrade',900); return; }
+    state.gold -= upCost.gold;
+    s.level = (s.level||0) + 1;
+    s.hp = Math.round((s.hp||450) * 1.15);
+    savePersist(state); updateHUD();
+    showHUDMessage(`Gold Stash upgraded to L${s.level} — Towers & Mines unlocked`, 1800);
+    showActionPanel('Gold Stash', s);
+    return;
+  }
+
+  if(state.selectedObject.type === 'mine'){
+    const m = state.selectedObject.obj;
+    if(!state.stash || (state.stash.level||0) < 1){ showHUDMessage('Upgrade locked — upgrade Gold Stash first',1000); return; }
+    const upCost = computeUpgradeCostForMine(m);
+    if((m.level||1) >= 5){ showHUDMessage('Mine is already max level',900); return; }
+    if(!(state.gold >= upCost.gold && state.wood >= upCost.wood && state.stone >= upCost.stone)){ showHUDMessage('Not enough resources for mine upgrade',900); return; }
+    state.gold -= upCost.gold; state.wood -= upCost.wood; state.stone -= upCost.stone;
+    m.level = (m.level||1) + 1;
+    m.goldPerSec = Math.round(m.goldPerSec * 1.35 * 100)/100;
+    savePersist(state); updateHUD();
+    showHUDMessage(`Mine upgraded to L${m.level}`, 1200);
+    showActionPanel('Mine', m);
+    return;
+  }
+
+  if(state.selectedObject.type === 'tower'){
+    const t = state.selectedObject.obj;
+    if(!state.stash || (state.stash.level||0) < 1){ showHUDMessage('Upgrade locked — upgrade Gold Stash first',1000); return; }
+    if((t.level||1) >= 5){ showHUDMessage('Tower is already max level',900); return; }
+    const upCost = computeUpgradeCostForTower(t);
+    if(!(state.gold >= upCost.gold && state.wood >= upCost.wood && state.stone >= upCost.stone)){ showHUDMessage('Not enough resources for tower upgrade',900); return; }
+    state.gold -= upCost.gold; state.wood -= upCost.wood; state.stone -= upCost.stone;
+    t.level = (t.level || 1) + 1;
+    t.dmg = Math.round((t.dmg || 10) * 1.25);
+    t.range = Math.round((t.range || 150) * 1.10);
+    t.rate = Math.max(0.18, (t.rate || 1.0) * 0.92);
+    savePersist(state); updateHUD();
+    showHUDMessage(`${t.kind.charAt(0).toUpperCase()+t.kind.slice(1)} Tower upgraded to L${t.level}`, 1400);
+    showActionPanel('Tower', t);
+    return;
+  }
+}
+
+function pickAt(wx,wy){
+  state.selectedObject = null;
+  for(const t of state.towers) if(Math.hypot(t.x - wx, t.y - wy) < 22){
+    state.selectedObject = {type:'tower', obj:t};
+    showHUDMessage(`Selected tower (${t.kind})`,1100);
+    showActionPanel('Tower', t, wx, wy);
+    return;
+  }
+  for(const m of state.mines) if(Math.hypot(m.x - wx, m.y - wy) < 22){
+    state.selectedObject = {type:'mine', obj:m};
+    showHUDMessage('Selected mine',1100);
+    showActionPanel('Mine', m, wx, wy);
+    return;
+  }
+  if(state.stash && Math.hypot(state.stash.x - wx, state.stash.y - wy) < 28){
+    state.selectedObject = {type:'stash', obj: state.stash};
+    showHUDMessage('Selected stash',1100);
+    showActionPanel('Gold Stash', state.stash, wx, wy);
+    return;
+  }
+  // clicked empty ground
+  state.selectedObject = null;
+  actionPanel.style.display = 'none';
+  showHUDMessage('No building selected', 1000);
+}
+
+  function sellSelected(){
+    if(!state.selectedObject){ showHUDMessage('No building selected', 900); return; }
+    if(state.selectedObject.type === 'tower'){
+      const t = state.selectedObject.obj;
+      const base = { fire:{w:30,s:15}, cold:{w:25,s:20}, poison:{w:40,s:25} }[t.kind] || {w:20,s:20};
+      const refundW = Math.floor(base.w * 0.5 * t.level);
+      const refundS = Math.floor(base.s * 0.5 * t.level);
+      state.wood += refundW; state.stone += refundS;
+      const idx = state.towers.indexOf(t); if(idx>=0) state.towers.splice(idx,1);
+      savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage(`Sold tower +${refundW}🪵 +${refundS}🪨`,1200); return;
+    }
+    if(state.selectedObject.type === 'mine'){
+      state.wood += Math.floor(COSTS.mine.wood * 0.5); state.stone += Math.floor(COSTS.mine.stone * 0.5);
+      const m = state.selectedObject.obj; const idx = state.mines.indexOf(m); if(idx>=0) state.mines.splice(idx,1);
+      savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage('Sold mine',1200); return;
+    }
+    if(state.selectedObject.type === 'stash'){
+      if(confirm('Destroying stash will wipe towers & mines (keeps your gold & resources). Proceed?')){
+        state.stash = null; state.towers=[]; state.mines=[]; savePersist(state); updateHUD(); state.selectedObject = null; showHUDMessage('Stash destroyed — base wiped',1300);
+      }
+      return;
+    }
+  }
+
+  function autoMouseHoldAction(dt){
+    if(mouse.down){
+      if(state.handCooldown <= 0){
+        playerHandAction();
+        state.handCooldown = state.handMax;
+      }
+    }
+  }
+
+  // --- Update & draw loop ---
+  function update(dt){
+    // day/night
+    updateDayNight(dt);
+    // cooldowns
+    if(state.handCooldown > 0) state.handCooldown = Math.max(0, state.handCooldown - dt);
+    // auto-hit while holding mouse
+    autoMouseHoldAction(dt);
+    // player
+    state.player.update(dt);
+    // resources
+    for(const r of state.resourceNodes) r.update(dt);
+    // towers
+    for(const t of state.towers) t.update(dt);
+    // mines
+    for(const m of state.mines) m.update(dt);
+    // auto-collect gold from mines
+    for(const m of state.mines){
+      const amt = m.accum;
+      if(amt >= 1){
+        state.gold += Math.floor(amt);
+        m.accum = 0;
+        savePersist(state);
+        showHUDMessage(`+${Math.floor(amt)} gold (auto)`, 600);
+        updateHUD();
+      }
+    }
+    // enemies
+    for(const e of state.enemies) e.update(dt);
+    // bullets
+    updateBullets(dt);
+    // dead enemies & gold reward
+    for(let i=state.enemies.length-1;i>=0;i--){
+      const e = state.enemies[i];
+      if(e.hp <= 0){
+        state.gold += (e.type==='tank'?40: e.type==='runner'?12:10);
+        state.enemies.splice(i,1); savePersist(state); showHUDMessage('+ gold', 700);
+      }
+    }
+    // stash destroyed: wipe base
+    if(state.stash && state.stash.hp <= 0){
+      state.stash = null; state.towers = []; state.mines = []; state.player.x = MAP_W/2 + 48; state.player.y = MAP_H/2 + 8;
+      savePersist(state); showHUDMessage('Stash destroyed — base wiped', 1800);
+    }
+    // camera follow & clamp
+    state.cam.x = clamp(state.player.x - canvas.width/2, 0, MAP_W - canvas.width);
+    state.cam.y = clamp(state.player.y - canvas.height/2, 0, MAP_H - canvas.height);
+    updateHUD();
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = state.inNight ? '#05151a' : '#0b2630'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    const offX = state.cam.x, offY = state.cam.y;
+    // soft grid
+    ctx.save(); ctx.globalAlpha = 0.06; ctx.fillStyle = '#fff';
+    const step = 40; for(let gx = - (offX % step); gx < canvas.width; gx += step) ctx.fillRect(gx, 0, 1, canvas.height);
+    for(let gy = - (offY % step); gy < canvas.height; gy += step) ctx.fillRect(0, gy, canvas.width, 1);
+    ctx.restore();
+    // base
+    const bx = MAP_W/2 - offX, by = MAP_H/2 - offY;
+    ctx.save(); ctx.translate(bx, by); ctx.fillStyle = '#3b6'; roundRect(-40,-40,80,80,10,true); ctx.fillStyle='#072'; ctx.fillRect(-12,-12,24,24); ctx.restore();
+    // resources
+    for(const r of state.resourceNodes) r.draw(offX, offY);
+    // mines
+    for(const m of state.mines) m.draw(offX, offY);
+    // stash
+    if(state.stash){ const sx = state.stash.x - offX, sy = state.stash.y - offY; ctx.save(); ctx.translate(sx, sy); ctx.fillStyle = '#ffd36b'; roundRect(-18,-14,36,28,6,true); ctx.fillStyle='#000'; ctx.font='12px monospace'; ctx.fillText('STASH', -16, 4); ctx.restore(); }
+    // towers
+    for(const t of state.towers) t.draw(offX, offY, state.selectedObject && state.selectedObject.type==='tower' && state.selectedObject.obj === t);
+    // player
+    state.player.draw(offX, offY);
+    // enemies
+    for(const e of state.enemies) e.draw(offX, offY);
+    // bullets
+    ctx.fillStyle = '#ffd';
+    for(const b of state.bullets){ const bx = b.x - offX, by = b.y - offY; if(bx < -50 || bx > canvas.width+50 || by < -50 || by > canvas.height+50) continue; ctx.beginPath(); ctx.arc(bx,by,4,0,Math.PI*2); ctx.fill(); }
+    // canvas small HUD
+    ctx.fillStyle = 'rgba(0,0,0,0.28)'; ctx.fillRect(12, canvas.height - 46, 560, 36);
+    ctx.fillStyle = '#fff'; ctx.font = '13px monospace';
+    ctx.fillText('Enemies: ' + state.enemies.length + '  Towers: ' + state.towers.length + '  Mines: ' + state.mines.length, 18, canvas.height - 22);
+    // placement ghost
+    if(state.selectedBuild){
+      const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y;
+      const snap = snapToGrid(wx,wy);
+      const sx = snap.x - offX, sy = snap.y - offY;
+      ctx.save(); ctx.globalAlpha = 0.95; ctx.fillStyle = '#fff'; roundRect(sx - 20, sy - 16, 40, 32, 6, true);
+      ctx.fillStyle = '#000'; ctx.font = '12px monospace'; ctx.fillText(state.selectedBuild.toUpperCase(), sx - 18, sy + 4); ctx.restore();
+    }
+    // night tint
+    if(state.inNight){ ctx.fillStyle = 'rgba(5,10,20,0.22)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+  }
+
+  function updateHUD(){
+    HUD_gold.textContent = Math.floor(state.gold);
+    HUD_wood.textContent = Math.floor(state.wood);
+    HUD_stone.textContent = Math.floor(state.stone);
+    HUD_hpText.textContent = `${Math.max(0,Math.round(state.player.hp))}/100`;
+    HUD_hpFill.style.width = `${clamp(state.player.hp/100, 0, 1)*100}%`;
+    HUD_wave.textContent = state.wave;
+    HUD_lives.textContent = state.lives;
+  }
+
+  // --- Init world ---
+  function initWorld(){
+    state.resourceNodes = [];
+    const cx = MAP_W/2, cy = MAP_H/2;
+    for(let i=0;i<48;i++){
+      let a = Math.random()*Math.PI*2, r = 160 + Math.random()*520;
+      const x = clamp(cx + Math.cos(a)*r, 60, MAP_W-60), y = clamp(cy + Math.sin(a)*r, 60, MAP_H-60);
+      const type = Math.random() < 0.56 ? 'tree' : 'rock';
+      state.resourceNodes.push(new ResourceNode(x,y,type));
+    }
+    state.towers = []; state.mines = []; state.enemies = []; state.bullets = []; state.stash = null;
+    state.player = new Player(MAP_W/2 + 48, MAP_H/2 + 8);
+    state.wave = 0; state.lives = 10;
+    loadPersist(state); updateHUD(); state.timeOfDay = 8; state._nightStarted = false;
+    showHUDMessage('World ready. Build a Gold Stash first (🏆).', 2500);
+  }
+
+  // --- Input & UI wiring ---
+  bindBuildButtons = bindBuildButtons; // ensure function exists in this scope
+  try {
+    const buildButtons = document.querySelectorAll('.shop-btn');
+    buildButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.build;
+        if(kind) { state.selectedBuild = kind; showHUDMessage('Selected: ' + kind, 1200); }
+      });
+      btn.addEventListener('mouseenter', () => {
+        const t = btn.getAttribute('title') || btn.dataset.build || '';
+        showTooltip(t || ' ');
+      });
+      btn.addEventListener('mouseleave', hideTooltip);
+    });
+  } catch(e){ console.warn('shop bind failed', e); }
+
+  const forceBtn = document.getElementById('forceNightBtn');
+  const wipeBtn = document.getElementById('wipeBaseBtn');
+  const sellBtn = document.getElementById('sellBtn');
+  if(forceBtn) forceBtn.addEventListener('click', () => { state.timeOfDay = state.cycleDay + 0.01; showHUDMessage('Forced night'); });
+  if(wipeBtn) wipeBtn.addEventListener('click', () => { if(confirm('Wipe towers & mines?')){ state.towers=[]; state.mines=[]; state.stash=null; savePersist(state); showHUDMessage('Base wiped'); updateHUD(); }});
+  if(sellBtn) sellBtn.addEventListener('click', () => { sellSelected(); updateHUD(); });
+
+// Tool buttons: Hand / Axe
+const toolHandBtn = document.getElementById('toolHand');
+const toolAxeBtn  = document.getElementById('toolAxe');
+const actionPanel  = document.getElementById('actionPanel');
+const actionTitle  = document.getElementById('actionTitle');
+const actionInfo   = document.getElementById('actionInfo');
+const upgradePreview = document.getElementById('upgradePreview');
+const actionSellBtn = document.getElementById('actionSellBtn');
+const actionUpgradeBtn = document.getElementById('actionUpgradeBtn');
+const actionCloseBtn = document.getElementById('actionCloseBtn');
+
+if(toolHandBtn) toolHandBtn.addEventListener('click', () => {
+  state.selectedTool = 'hand';
+  state.selectedBuild = null;          // deselect building placement
+  actionPanel.style.display = 'none';  // hide action UI
+  showHUDMessage('Tool: Hand', 900);
+});
+if(toolAxeBtn) toolAxeBtn.addEventListener('click', () => {
+  state.selectedTool = 'axe';
+  state.selectedBuild = null;          // deselect building placement
+  actionPanel.style.display = 'none';
+  showHUDMessage('Tool: Axe', 900);
+});
+
+  canvas.addEventListener('dblclick', () => { const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y; placeSelectedBuild(wx,wy); });
+  canvas.addEventListener('click', () => {
+    const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y;
+    if(state.selectedBuild){ placeSelectedBuild(wx,wy); } else { pickAt(wx,wy); }
+  });
+  canvas.addEventListener('mousedown', (e) => { if(e.button===0) playerHandAction(); });
+  document.addEventListener('keydown', (e) => {
+    if(e.key === ' ') { playerHandAction(); e.preventDefault(); }
+    if(e.key === '1') state.selectedBuild = 'stash';
+    if(e.key === '2') state.selectedBuild = 'mine';
+    if(e.key === '3') state.selectedBuild = 'fire';
+    if(e.key === '4') state.selectedBuild = 'cold';
+    if(e.key === '5') state.selectedBuild = 'poison';
+    if(e.key.toLowerCase() === 'e'){ const wx = state.cam.x + mouse.x, wy = state.cam.y + mouse.y; let acted=false;
+      for(const r of state.resourceNodes){ if(Math.hypot(r.x - wx, r.y - wy) < r.size + 12){ r.harvest(state); updateHUD(); acted=true; break; } }
+      if(!acted){ for(const m of state.mines){ if(Math.hypot(m.x - wx, m.y - wy) < m.size + 12){ const amt=Math.floor(m.accum); if(amt>0){ state.gold += amt; m.accum=0; savePersist(state); updateHUD(); showHUDMessage(`+${amt} gold`); acted=true; break; } } } }
+      if(!acted) showHUDMessage('Nothing to harvest here', 900);
+    }
+    if(e.key.toLowerCase() === 'r'){ if(confirm('Reset world? Resources & gold will remain.')) initWorld(); }
+  });
+
+  // --- Loop & safety ---
+  let last = performance.now();
+  function loop(now){
+    try {
+      const dt = Math.min(0.06, (now - last)/1000); last = now;
+      if(state.player === null){ /* not initialized yet */ }
+      update(dt);
+      draw();
+      updateHUDMessageTimer(dt);
+    } catch(err){
+      console.error('Runtime error in loop:', err);
+      // show visible error message on canvas
+      ctx.save();
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle = '#fff'; ctx.font = '16px monospace';
+      ctx.fillText('Runtime error occurred. See console for details.', 10, 30);
+      ctx.restore();
+      return; // stop loop to avoid spam
+    }
+    requestAnimationFrame(loop);
+  }
+
+  // --- Start ---
+  try {
+    initWorld();
+    // minor startup enemy to show alive state
+    spawnWave(0);
+    requestAnimationFrame(loop);
+    window._zstate = state;
+    console.log('Game initialized. window._zstate available for debugging.');
+  } catch(err){
+    console.error('Initialization failed:', err);
+    showHUDMessage('Init failed — check console', 6000);
+  }
+
+  // expose some helpers for debugging in console
+  window._dump = { state, canvas, ctx, savePersist, loadPersist, spawnWave, placeSelectedBuild };
+
+})();
+</script>
+</body>
+</html>
